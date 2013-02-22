@@ -5,6 +5,7 @@
  * look up and read DSOs and symbol information and display
  * a histogram of results, along various sorting keys.
  */
+#include "generated/autoconf.h"
 #include "builtin.h"
 
 #include "util/util.h"
@@ -406,6 +407,7 @@ static int report__browse_hists(struct report *rep)
 	const char *help = "For a higher level overview, try: perf report --sort comm,dso";
 
 	switch (use_browser) {
+#ifdef CONFIG_TUI
 	case 1:
 		ret = perf_evlist__tui_browse_hists(evlist, help, NULL,
 						    rep->min_percent,
@@ -417,6 +419,7 @@ static int report__browse_hists(struct report *rep)
 		if (ret != K_SWITCH_INPUT_DATA)
 			ret = 0;
 		break;
+#endif /* CONFIG_TUI */
 	case 2:
 		ret = report__gtk_browse_hists(rep, help);
 		break;
