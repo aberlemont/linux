@@ -1,0 +1,5 @@
+obj-y += dwarf-regs.o
+obj-y += header.o
+obj-y += tsc.o
+obj-y += kvm-stat.o
+obj-$(CONFIG_LIBUNWIND) += unwind-libunwind.o

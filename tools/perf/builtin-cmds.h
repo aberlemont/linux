@@ -1,6 +1,7 @@
 #ifndef BUILTIN_CMDS_H
 #define BUILTIN_CMDS_H
 
+#ifndef CONFIG_KBUILD
 #define CONFIG_BUILTIN_REPORT 1
 #define CONFIG_BUILTIN_SCRIPT 1
 #define CONFIG_BUILTIN_BENCH 1
@@ -23,5 +24,8 @@
 #define CONFIG_BUILTIN_HELP 1
 #define CONFIG_BUILTIN_PROBE 1
 #define CONFIG_BUILTIN_MEM 1
+#else
+#include "generated/autoconf.h"
+#endif /* CONFIG_KBUILD */
 
 #endif /* BUILTIN_CMDS_H */

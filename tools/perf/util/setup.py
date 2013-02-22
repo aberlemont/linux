@@ -2,6 +2,7 @@
 
 from distutils.core import setup, Extension
 from os import getenv
+from os import environ
 
 from distutils.command.build_ext   import build_ext   as _build_ext
 from distutils.command.install_lib import install_lib as _install_lib
@@ -27,8 +28,11 @@ build_tmp = getenv('PYTHON_EXTBUILD_TMP')
 libtraceevent = getenv('LIBTRACEEVENT')
 libapikfs = getenv('LIBAPIKFS')
 
-ext_sources = [f.strip() for f in file('util/python-ext-sources')
-				if len(f.strip()) > 0 and f[0] != '#']
+if environ.has_key('PYTHON_EXT_SRCS'):
+    ext_sources = getenv('PYTHON_EXT_SRCS').split()
+else:
+    ext_sources = [f.strip() for f in file('util/python-ext-sources')
+                                   if len(f.strip()) > 0 and f[0] != '#']
 
 perf = Extension('perf',
 		  sources = ext_sources,

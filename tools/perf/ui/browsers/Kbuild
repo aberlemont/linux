@@ -1,0 +1,9 @@
+obj-$(CONFIG_TUI) += annotate.o
+obj-$(CONFIG_TUI) += header.o
+obj-$(CONFIG_TUI) += hists.o
+obj-$(CONFIG_TUI) += map.o
+obj-$(CONFIG_TUI) += scripts.o
+
+CFLAGS_hists.o += -DENABLE_SLFUTURE_CONST
+CFLAGS_map.o += -DENABLE_SLFUTURE_CONST
+CFLAGS_scripts.o += -DENABLE_SLFUTURE_CONST

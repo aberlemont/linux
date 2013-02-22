@@ -1,0 +1,9 @@
+obj-y += browser.o
+obj-y += hists.o
+obj-y += setup.o
+obj-y += util.o
+obj-y += helpline.o
+obj-y += progress.o
+obj-y += annotate.o
+
+subdir-ccflags-y := $(GTK_CFLAGS)

@@ -1,0 +1,104 @@
+include $(CONFIG_DETECTED)
+include $(KCONFIG_CONFIG)
+
+CONFIG := $(srctree)/scripts/config --file $(KCONFIG_CONFIG)
+
+# NO_LIBPERL
+ifdef CONFIG_LIBPERL
+ifdef NO_LIBPERL
+dummy := $(info Disabling CONFIG_LIBPERL)
+dummy := $(shell $(CONFIG) -d CONFIG_LIBPERL)
+endif
+endif
+
+# NO_LIBPYTHON
+ifdef CONFIG_LIBPYTHON
+ifdef NO_LIBPYTHON
+dummy := $(info Disabling CONFIG_LIBPYTHON)
+dummy := $(shell $(CONFIG) -d CONFIG_LIBPYTHON)
+endif
+endif
+
+# NO_NEWT
+ifdef CONFIG_TUI
+ifdef NO_NEWT
+dummy := $(info Disabling CONFIG_TUI)
+dummy := $(shell $(CONFIG) -d CONFIG_TUI)
+endif
+endif
+
+# NO_NEWT
+ifdef CONFIG_TUI
+ifdef NO_SLANG
+dummy := $(info Disabling CONFIG_TUI)
+dummy := $(shell $(CONFIG) -d CONFIG_TUI)
+endif
+endif
+
+# NO_GTK2
+ifdef CONFIG_GTK2
+ifdef NO_GTK2
+dummy := $(info Disabling CONFIG_GTK2)
+dummy := $(shell $(CONFIG) -d CONFIG_GTK2)
+endif
+endif
+
+# NO_DEMANGLE
+ifdef CONFIG_DEMANGLE
+ifdef NO_DEMANGLE
+dummy := $(info Disabling CONFIG_DEMANGLE)
+dummy := $(shell $(CONFIG) -d CONFIG_DEMANGLE)
+endif
+endif
+
+# NO_LIBELF
+ifdef CONFIG_LIBELF
+ifdef NO_LIBELF
+dummy := $(info Disabling CONFIG_LIBELF)
+dummy := $(info Enabling  CONFIG_LIBELF_MINIMAL)
+dummy := $(shell $(CONFIG) -d CONFIG_LIBELF)
+dummy := $(shell $(CONFIG) -e CONFIG_LIBELF_MINIMAL)
+endif
+endif
+
+# NO_LIBUNWIND
+ifdef CONFIG_LIBUNWIND
+ifdef NO_LIBUNWIND
+dummy := $(info Disabling CONFIG_LIBUNWIND)
+dummy := $(shell $(CONFIG) -d CONFIG_LIBUNWIND)
+endif
+endif
+
+# NO_BACKTRACE
+ifdef CONFIG_BACKTRACE
+ifdef NO_BACKTRACE
+dummy := $(info Disabling CONFIG_BACKTRACE)
+dummy := $(shell $(CONFIG) -d CONFIG_BACKTRACE)
+endif
+endif
+
+# NO_LIBNUMA
+ifdef CONFIG_NUMA
+ifdef NO_LIBNUMA
+dummy := $(info Disabling CONFIG_NUMA)
+dummy := $(shell $(CONFIG) -d CONFIG_NUMA)
+endif
+endif
+
+# NO_LIBAUDIT
+ifdef CONFIG_LIBAUDIT
+ifdef NO_LIBAUDIT
+dummy := $(info Disabling CONFIG_LIBAUDIT)
+dummy := $(shell $(CONFIG) -d CONFIG_LIBAUDIT)
+endif
+endif
+
+# NO_LIBBIONIC
+ifdef CONFIG_BIONIC
+ifdef NO_LIBBIONIC
+dummy := $(info Disabling CONFIG_BIONIC)
+dummy := $(shell $(CONFIG) -d CONFIG_BIONIC)
+endif
+endif
+
+all:

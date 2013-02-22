@@ -1,0 +1,15 @@
+obj-$(CONFIG_TUI) += browser.o
+obj-y += helpline.o
+obj-y += hist.o
+obj-y += progress.o
+obj-y += setup.o
+obj-y += util.o
+
+obj-y += browsers/
+obj-y += stdio/
+
+obj-$(CONFIG_TUI)  += tui/
+obj-$(CONFIG_GTK2) += gtk/
+
+CFLAGS_browser.o += -DENABLE_SLFUTURE_CONST
+CFLAGS_setup.o += -D"LIBDIR=KBUILD_STR($(libdir_SQ))"

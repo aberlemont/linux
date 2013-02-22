@@ -1,0 +1,12 @@
+obj-y += mem-memcpy.o
+obj-y += mem-memset.o
+obj-y += sched-messaging.o
+obj-y += sched-pipe.o
+obj-y += futex-hash.o
+obj-y += futex-requeue.o
+obj-y += futex-wake.o
+
+obj-$(CONFIG_NUMA) += numa.o
+
+obj-$(CONFIG_X86_64) += mem-memcpy-x86-64-asm.o
+obj-$(CONFIG_X86_64) += mem-memset-x86-64-asm.o

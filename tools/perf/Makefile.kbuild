@@ -1,0 +1,431 @@
+srctree := $(abspath $(if $(KBUILD_SRC),$(KBUILD_SRC),$(CURDIR)/../../))
+objtree := $(abspath $(if $(KBUILD_SRC),$(CURDIR),$(CURDIR)/../..))
+
+VPATH   := $(srctree)
+
+export srctree VPATH
+
+MAKEFLAGS += --include-dir=$(srctree)
+MAKEFLAGS += --no-builtin-rules
+MAKEFLAGS += --no-print-directory
+
+ifeq ("$(origin V)", "command line")
+KBUILD_VERBOSE = $(V)
+endif
+
+ifndef KBUILD_VERBOSE
+KBUILD_VERBOSE = 0
+endif
+
+ifeq ($(KBUILD_VERBOSE),1)
+quiet =
+Q =
+else
+quiet=quiet_
+Q = @
+endif
+
+# If the user is running make -s (silent mode), suppress echoing of
+# commands
+ifneq ($(filter s% -s%,$(MAKEFLAGS)),)
+quiet=silent_
+endif
+
+export quiet Q KBUILD_VERBOSE
+
+ifndef V
+QUIET_LINK  = @echo '  LD      $@';
+QUIET_GEN   = @echo '  GEN     $@';
+QUIET_CLEAN = @echo '  CLEAN   tools/perf';
+endif
+
+export QUIET_BISON QUIET_FLEX
+
+ifeq ($(KBUILD_SRC),)
+
+ifeq ("$(origin O)", "command line")
+KBUILD_OUTPUT := $(O)
+else
+KBUILD_OUTPUT := $(objtree)
+endif
+
+# Invoke a second make in the output directory, passing relevant variables
+# check that the output directory actually exists
+saved-output := $(KBUILD_OUTPUT)
+KBUILD_OUTPUT := $(shell cd $(KBUILD_OUTPUT) && /bin/pwd)
+$(if $(KBUILD_OUTPUT),, \
+     $(error output directory "$(saved-output)" does not exist))
+
+dummy := $(shell mkdir -p $(KBUILD_OUTPUT)/lib)
+dummy := $(shell mkdir -p $(KBUILD_OUTPUT)/include/config)
+dummy := $(shell mkdir -p $(KBUILD_OUTPUT)/tools/perf)
+
+PHONY += $(MAKECMDGOALS) sub-make
+
+$(filter-out sub-make $(CURDIR)/Makefile, $(MAKECMDGOALS)) all: sub-make
+        @:
+
+sub-make: FORCE
+	$(if $(KBUILD_VERBOSE:1=),@)$(MAKE) -C $(KBUILD_OUTPUT) \
+	KBUILD_SRC=$(srctree) \
+	-f $(CURDIR)/Makefile.kbuild \
+	$(filter-out sub-make,$(MAKECMDGOALS))
+
+# Leave processing to above invocation of make
+skip-makefile := 1
+endif # ifeq ($(KBUILD_SRC),)
+
+export KBUILD_SRC
+
+ifeq ($(skip-makefile),)
+
+build := -f $(srctree)/scripts/Makefile.build obj
+
+src-kernel := $(srctree)
+src-perf   := $(srctree)/tools/perf
+obj-kernel := $(objtree)
+obj-perf   := $(objtree)/tools/perf
+
+VPATH += $(src-perf)
+
+export src-perf obj-perf
+
+OUTPUT := $(obj-perf)/
+
+export OUTPUT DESTDIR
+
+AS      = $(CROSS_COMPILE)as
+LD      = $(CROSS_COMPILE)ld
+CC      = $(CROSS_COMPILE)gcc
+CPP     = $(CC) -E
+HOSTCC  = gcc
+FLEX    = flex
+BISON   = bison
+INSTALL = install
+PKG_CONFIG = pkg-config
+
+export AS LD CC CPP HOSTCC FLEX BISON PKG_CONFIG
+
+# kbuild related config
+CONFIG_SHELL          := /bin/sh
+
+KBUILD_KCONFIG        := $(src-perf)/Kconfig
+KCONFIG_CONFIG        ?= $(obj-perf)/.config
+KCONFIG_TRISTATE      := $(obj-perf)/include/config/tristate.conf
+KCONFIG_AUTOHEADER    := $(obj-perf)/include/generated/autoconf.h
+KCONFIG_AUTOCONFIG    := $(obj-perf)/include/config/auto.conf
+KCONFIG_SCRIPT        := $(srctree)/scripts/config --file $(KCONFIG_CONFIG)
+
+export CONFIG_SHELL
+export KBUILD_KCONFIG
+export KCONFIG_CONFIG KCONFIG_TRISTATE
+export KCONFIG_AUTOHEADER KCONFIG_AUTOCONFIG KCONFIG_SCRIPT
+
+# perf detected config
+CONFIG_DETECTED := $(obj-perf)/.config-detected
+
+export CONFIG_DETECTED
+
+# external .a libs
+LIBTRACEEVENT   := $(obj-kernel)/tools/lib/traceevent/libtraceevent.a
+LIBAPIKFS       := $(obj-kernel)/tools/lib/api/libapikfs.a
+LIBS_A          := $(LIBTRACEEVENT) $(LIBAPIKFS)
+
+export LIBTRACEEVENT LIBAPIKFS
+
+all:
+
+scripts_basic:
+	$(Q)$(MAKE) $(build)=scripts/basic
+
+defconfig: scripts_basic
+	$(Q)cp $(src-perf)/config/defconfig $(KCONFIG_CONFIG)
+	$(Q)$(MAKE) -s $(build)=scripts/kconfig oldconfig
+
+%config: scripts_basic
+	$(Q)$(MAKE) -s $(build)=scripts/kconfig $@
+
+$(KCONFIG_CONFIG):
+	$(Q)$(MAKE) $(build)=scripts/basic
+	$(Q)$(MAKE) -s $(build)=scripts/kconfig allyesconfig
+
+$(CONFIG_DETECTED): $(KCONFIG_CONFIG)
+	$(Q)$(MAKE) -f $(src-perf)/config/Makefile
+
+# no need to include auto.conf.cmd, because .config
+# is the only dependency here
+$(KCONFIG_AUTOCONFIG): $(KCONFIG_CONFIG) $(CONFIG_DETECTED)
+	$(Q)$(MAKE) -f $(src-perf)/config/Makefile.fix-config
+	$(Q)mkdir -p $(obj-perf)/include/config
+	$(Q)mkdir -p $(obj-perf)/include/generated
+	$(Q)$(MAKE) -s $(build)=scripts/kconfig silentoldconfig
+	@touch $(CONFIG_DETECTED) # final touch.. to keep the time dependency correct
+
+clean-dirs := $(addprefix _clean_, tools/perf/)
+
+$(clean-dirs):
+	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.clean obj=$(patsubst _clean_%,%,$@)
+
+clean: $(clean-dirs) $(LIBTRACEEVENT)-clean $(LIBAPIKFS)-clean
+	$(Q)$(QUIET_CLEAN)
+	$(Q)rm -f $(obj-perf)/perf
+	$(Q)rm -f $(obj-perf)/common-cmds.h
+	$(Q)rm -f $(obj-perf)/python/perf.so
+	$(Q)rm -rf $(obj-perf)/include/generated $(obj-perf)/include/config
+	$(Q)find $(obj-perf) \
+		\( -name '*.[oas]' -o -name '.*.cmd' \
+		-o -name '.*.d' -o -name '.*.tmp' \
+		-o -name '*-flex.[ch]' -o -name '*-bison.[ch]' \
+		\) -type f -print | xargs rm -f
+	$(Q)$(python-clean)
+	$(Q)rm -f $(CONFIG_DETECTED) $(KCONFIG_CONFIG)
+	@$(MAKE) OUTPUT=$(obj-perf)/config/feature-checks/ -C $(src-perf)/config/feature-checks clean >/dev/null
+
+TAGS tags:
+	$(Q)rm -f $(src-perf)/tags
+	$(QUIET_GEN)cd $(src-perf); find . -name '*.[hcS]' -print | xargs ctags -a
+
+cscope:
+	$(Q)rm -f $(src-perf)/cscope*
+	$(QUIET_GEN)cd $(src-perf); find . -name '*.[hcS]' -print | xargs cscope -b
+
+PHONY += clean $(clean-dirs) tags TAGS cscope
+
+ifneq ($(filter %config help clean tags TAGS cscope,$(MAKECMDGOALS)),)
+dont-detect := 1
+endif
+
+ifndef dont-detect
+# detected config variables
+-include $(CONFIG_DETECTED)
+
+ifdef CONFIG_DETECTED_STORED
+# Following variables are needed within Kbuild files, we need
+# to export them as they are not part of the .config set.
+export CONFIG_ARCH := $(ARCH)
+export CROSS_COMPILE
+export CONFIG_X86_64
+export htmldir_SQ
+export infodir_SQ
+export mandir_SQ
+export perfexecdir_SQ
+export PARSER_DEBUG_BISON
+export PARSER_DEBUG_FLEX
+export ETC_PERFCONFIG_SQ
+export libdir_SQ
+export plugindir_SQ
+export PYTHON_EMBED_CCOPTS
+export PERL_EMBED_CCOPTS
+export GTK_CFLAGS
+
+# The variable DESTDIR could be overloaded at make launch time
+ifdef DESTDIR
+  DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
+else
+  DESTDIR = $(DESTDIR_SQ)
+endif
+export DESTDIR DESTDIR_SQ
+
+# The variable prefix could be overloaded at make launch time
+ifdef prefix
+  prefix_SQ = $(subst ','\'',$(prefix))
+else
+  prefix = $(prefix_SQ)
+endif
+
+export prefix prefix_SQ
+
+endif # CONFIG_DETECTED_STORED
+
+endif # !dont-detect
+
+# let sources know it's kbuild
+CFLAGS += -DCONFIG_KBUILD
+
+# kbuild related config
+LINUXINCLUDE    := $(CFLAGS)
+KBUILD_BUILTIN  := 1
+KBUILD_CHECKSRC := 0
+
+export LINUXINCLUDE
+export KBUILD_BUILTIN KBUILD_CHECKSRC
+
+# pyuthon language binding
+PYTHON_EXTBUILD     := $(src-perf)/python_ext_build/
+PYTHON_EXTBUILD_LIB := $(PYTHON_EXTBUILD)lib/
+PYTHON_EXTBUILD_TMP := $(PYTHON_EXTBUILD)tmp/
+
+export PYTHON_EXTBUILD_LIB PYTHON_EXTBUILD_TMP
+
+python-clean := rm -rf $(PYTHON_EXTBUILD) $(obj-perf)/python/perf.so
+
+PYTHON_EXT_SRCS   := $(addprefix $(src-perf)/,$(shell grep -v ^\# $(src-perf)/util/python-ext-sources))
+PYTHON_EXT_DEPS   := $(src-perf)/util/python-ext-sources $(src-perf)/util/setup.py
+PYTHON_EXT_CFLAGS := $(CFLAGS) -w
+
+export PYTHON_EXT_SRCS
+
+
+$(obj-perf)/python/perf.so: $(PYTHON_EXT_SRCS) $(PYTHON_EXT_DEPS)
+	$(QUIET_GEN)CFLAGS='$(PYTHON_EXT_CFLAGS)' $(PYTHON_WORD) $(src-perf)/util/setup.py \
+	  --quiet build_ext; \
+	mkdir -p $(obj-perf)/python && \
+	cp $(PYTHON_EXTBUILD_LIB)perf.so $(obj-perf)/python/
+
+all: tools/perf/PERF-VERSION-FILE scripts_basic tools/perf/perf $(LANG_BINDINGS)
+
+$(obj-perf)/common-cmds.h: $(src-perf)/util/generate-cmdlist.sh $(src-perf)/command-list.txt
+	$(QUIET_GEN)$(src-perf)/util/generate-cmdlist.sh $(src-perf) > $@+ && mv $@+ $@
+
+PHONY += all scripts_basic
+
+$(obj-perf)/built-in.o: $(obj-perf)/common-cmds.h $(KCONFIG_AUTOCONFIG) FORCE
+	$(Q)$(MAKE) LDFLAGS="" $(build)=tools/perf
+
+LIBS = -Wl,--whole-archive $^ -Wl,--no-whole-archive -Wl,--start-group $(EXTLIBS) -Wl,--end-group
+
+tools/perf/perf: $(obj-perf)/built-in.o $(LIBS_A)
+	$(QUIET_LINK)$(CC) $(LDFLAGS) -o $@ $(LIBS) $(GTK_LIBS)
+
+$(LIBTRACEEVENT): FORCE
+	@mkdir -p $(obj-kernel)/tools/lib/traceevent
+	$(Q)$(MAKE) -C $(src-kernel)/tools/lib/traceevent O=$(obj-kernel)/tools/lib/traceevent
+
+$(LIBTRACEEVENT)-clean: FORCE
+	@mkdir -p $(obj-kernel)/tools/lib/traceevent
+	$(Q)$(MAKE) -sC $(srctree)/tools/lib/traceevent O=$(obj-kernel)/tools/lib/traceevent clean
+
+$(LIBTRACEEVENT)-install: $(LIBTRACEEVENT) FORCE
+	$(Q)$(MAKE) -sC $(srctree)/tools/lib/traceevent O=$(obj-kernel)/tools/lib/traceevent plugin_dir=$(plugindir_SQ) install
+
+$(LIBAPIKFS): FORCE
+	@mkdir -p $(obj-kernel)/tools/lib/api
+	$(Q)$(MAKE) -C $(srctree)/tools/lib/api O=$(obj-kernel)/tools/lib/api
+
+$(LIBAPIKFS)-clean: FORCE
+	@mkdir -p $(obj-kernel)/tools/lib/api
+	$(Q)$(MAKE) -sC $(srctree)/tools/lib/api O=$(obj-kernel)/tools/lib/api clean
+
+tools/perf/PERF-VERSION-FILE: FORCE
+	$(QUIET_GEN)$(SHELL_PATH) $(src-perf)/util/PERF-VERSION-GEN $(obj-perf)/
+
+
+# Single targets
+# ---------------------------------------------------------------------------
+# Single targets are compatible with:
+# - build with mixed source and output
+# - build with separate output dir 'make O=...'
+# - external modules
+#
+#  target-dir => where to store outputfile
+#  build-dir  => directory in kernel source tree to use
+
+build-dir  = $(patsubst $(obj-kernel)/%,%,$(abspath $(obj-perf)/$(patsubst %/,%,$(dir $@))))
+target-dir = $(patsubst $(obj-kernel)/%,%,$(abspath $(obj-perf)/$(dir $@)))
+
+%.o: %.c scripts_basic FORCE
+	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)/$(notdir $@)
+%.s: %.c scripts_basic FORCE
+	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)/$(notdir $@)
+%.i: %.c scripts_basic FORCE
+	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)/$(notdir $@)
+%.s: %.S scripts_basic FORCE
+	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)/$(notdir $@)
+%.o: %.S scripts_basic FORCE
+	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)/$(notdir $@)
+
+SCRIPT_SH += $(src-perf)/perf-archive.sh
+SCRIPTS    = $(patsubst %.sh,%,$(SCRIPT_SH))
+
+$(SCRIPTS) : % : %.sh
+	$(QUIET_GEN)$(INSTALL) '$@.sh' '$(perf-obj)$@'
+
+all: $(SCRIPTS)
+
+install-bin: all
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) $(obj-perf)/perf '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
+	$(INSTALL) $(src-perf)/perf-archive -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)'
+	$(INSTALL) $(src-perf)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'
+	$(INSTALL) $(src-perf)/scripts/perl/*.pl -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl'
+	$(INSTALL) $(src-perf)/scripts/perl/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
+	$(INSTALL) $(src-perf)/scripts/python/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'
+	$(INSTALL) $(src-perf)/scripts/python/*.py -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python'
+	$(INSTALL) $(src-perf)/scripts/python/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d'
+	$(INSTALL) $(src-perf)/perf-completion.sh '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d/perf'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests'
+	$(INSTALL) $(src-perf)/tests/attr.py '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests/attr'
+	$(INSTALL) $(src-perf)/tests/attr/* '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests/attr'
+
+install: install-bin try-install-man $(LIBTRACEEVENT)-install
+
+DOC_TARGETS := doc man html info pdf
+
+$(DOC_TARGETS):
+	$(Q)$(MAKE) -C $(src-perf)/Documentation $(@:doc=all)
+
+INSTALL_DOC_TARGETS := $(patsubst %,install-%,$(DOC_TARGETS)) try-install-man
+INSTALL_DOC_TARGETS += quick-install-doc quick-install-man quick-install-html
+
+# 'make install-doc' should call 'make -C Documentation install'
+$(INSTALL_DOC_TARGETS):
+	$(Q)$(MAKE) -C $(src-perf)/Documentation $(@:-doc=)
+
+help:
+	@echo 'Perf make targets:'
+	@echo '  doc		- make *all* documentation (see below)'
+	@echo '  man		- make manpage documentation (access with man <foo>)'
+	@echo '  html		- make html documentation'
+	@echo '  info		- make GNU info documentation (access with info <foo>)'
+	@echo '  pdf		- make pdf documentation'
+	@echo '  TAGS		- use etags to make tag information for source browsing'
+	@echo '  tags		- use ctags to make tag information for source browsing'
+	@echo '  cscope	- use cscope to make interactive browsing database'
+	@echo ''
+	@echo 'Perf install targets:'
+	@echo '  NOTE: documentation build requires asciidoc, xmlto packages to be installed'
+	@echo '  HINT: use "make prefix=<path> <install target>" to install to a particular'
+	@echo '        path like make prefix=/usr/local install install-doc'
+	@echo '  install	- install compiled binaries'
+	@echo '  install-doc	- install *all* documentation'
+	@echo '  install-man	- install manpage documentation'
+	@echo '  install-html	- install html documentation'
+	@echo '  install-info	- install GNU info documentation'
+	@echo '  install-pdf	- install pdf documentation'
+	@echo ''
+	@echo '  quick-install-doc	- alias for quick-install-man'
+	@echo '  quick-install-man	- install the documentation quickly'
+	@echo '  quick-install-html	- install the html documentation quickly'
+	@echo ''
+	@echo 'Perf maintainer targets:'
+	@echo '  clean			- clean all binary objects and build output'
+
+
+ifdef MAKE_DEBUG
+dummy := $(info DEBUG MAKEFLAGS             $(MAKEFLAGS))
+dummy := $(info DEBUG VPATH                 $(VPATH))
+dummy := $(info DEBUG srctree               $(srctree))
+dummy := $(info DEBUG objtree               $(objtree))
+dummy := $(info DEBUG src-kernel            $(src-kernel))
+dummy := $(info DEBUG src-perf              $(src-perf))
+dummy := $(info DEBUG obj-kernel            $(obj-kernel))
+dummy := $(info DEBUG obj-perf              $(obj-perf))
+dummy := $(info DEBUG KBUILD_KCONFIG        $(KBUILD_KCONFIG))
+dummy := $(info DEBUG KCONFIG_CONFIG        $(KCONFIG_CONFIG))
+dummy := $(info DEBUG KCONFIG_TRISTATE      $(KCONFIG_TRISTATE))
+dummy := $(info DEBUG KCONFIG_AUTOHEADER    $(KCONFIG_AUTOHEADER))
+dummy := $(info DEBUG KCONFIG_AUTOCONFIG    $(KCONFIG_AUTOCONFIG))
+dummy := $(info DEBUG TRACE_EVENT_DIR       $(TRACE_EVENT_DIR))
+dummy := $(info DEBUG LIBAPIKFS             $(LIBAPIKFS))
+endif
+
+endif  # skip-makefile
+
+PHONY += FORCE
+.PHONY: $(PHONY)

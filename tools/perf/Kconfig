@@ -1,0 +1,284 @@
+
+mainmenu "The perf configuration"
+
+menu "Built-in commands"
+
+config BUILTIN_RECORD
+	bool "record"
+	default y
+        ---help---
+	  Run a command and record its profile into a perf archive.
+
+config BUILTIN_REPORT
+	bool "report"
+	default y
+        ---help---
+	  Read a perf archive (created by perf record) and display the
+	  profile.
+
+config BUILTIN_STAT
+	bool "stat"
+	default y
+        ---help---
+	  Run a command and gather performance counter statistics.
+
+config BUILTIN_TOP
+	bool "top"
+	default y
+	depends on BUILTIN_RECORD && BUILTIN_REPORT
+        ---help---
+	  Generate and display a performance counter profile in
+	  real-time.
+
+config BUILTIN_TRACE
+	bool "trace"
+	default y
+	depends on BUILTIN_RECORD && LIBAUDIT
+        ---help---
+	  Strace inspired tool.
+
+config BUILTIN_ANNOTATE
+	bool "annotate"
+	default y
+        ---help---
+	  Read a perf archive (created by perf record) and display
+	  annotated code.
+
+config BUILTIN_BENCH
+	bool "bench"
+	default y
+        ---help---
+	  General framework for benchmark suites.
+
+config BUILTIN_BUILDID_CACHE
+	bool "buildid-cache"
+	default y
+        ---help---
+	  Manage build-id cache.
+
+config BUILTIN_BUILDID_LIST
+	bool "buildid-list"
+	default y
+        ---help---
+	  List the buildids in a perf archive file.
+
+config BUILTIN_DIFF
+	bool "diff"
+	default y
+        ---help---
+	  Read perf archive files and display the differential
+	  profile.
+
+config BUILTIN_EVLIST
+	bool "evlist"
+	default y
+        ---help---
+	  List the event names in a perf archive file
+
+config BUILTIN_HELP
+	bool "help"
+	default y
+        ---help---
+	  Display help information about perf
+
+config BUILTIN_INJECT
+	bool "inject"
+	default y
+        ---help---
+	  The inject feature reads a perf-record event stream and
+	  repipes it to stdout.
+
+config BUILTIN_KMEM
+	bool "kmem"
+	default y
+	depends on BUILTIN_RECORD
+        ---help---
+	  Tool to trace/measure kernel memory(slab) properties.
+
+config BUILTIN_KVM
+	bool "kvm"
+	default y
+	depends on BUILTIN_RECORD && BUILTIN_REPORT && \
+		BUILTIN_RECORD && BUILTIN_BUILDID_LIST && \
+		BUILTIN_TOP && BUILTIN_DIFF && BUILTIN_STAT
+        ---help---
+	  Tool to trace/measure kvm guest os
+
+config BUILTIN_LIST
+	bool "list"
+	default y
+        ---help---
+	  List all symbolic event types.
+
+config BUILTIN_LOCK
+	bool "lock"
+	default y
+	depends on BUILTIN_RECORD && BUILTIN_REPORT
+        ---help---
+	  Analyze lock events.
+
+config BUILTIN_PROBE
+	bool "probe"
+	default y
+	depends on LIBELF
+        ---help---
+	  Define new dynamic tracepoints
+
+config BUILTIN_SCHED
+	bool "sched"
+	default y
+	depends on BUILTIN_RECORD
+        ---help---
+	  Tool to trace/measure scheduler properties (latencies).
+
+config BUILTIN_SCRIPT
+	bool "script"
+	default y
+	depends on BUILTIN_RECORD
+        ---help---
+	  Read perf archive file (created by perf record) and display
+	  trace output.
+
+config BUILTIN_TIMECHART
+	bool "timechart"
+	default y
+	depends on BUILTIN_RECORD
+        ---help---
+	  Tool to visualize total system behavior during a workload.
+
+config BUILTIN_MEM
+	bool "mem"
+	default y
+	depends on BUILTIN_RECORD && BUILTIN_REPORT
+        ---help---
+	  Profile memory accesses.
+
+config BUILTIN_TEST
+	bool "test"
+	default y
+        ---help---
+	  Runs sanity tests.
+
+endmenu
+
+menu "GUI"
+
+config STDIO
+	bool "Terminal"
+	default y
+        ---help---
+	  Most basic display mode.
+
+config TUI
+	bool "Tui (slang based)"
+	default y
+        ---help---
+	  Text-based user interface which provides windowing
+	  facilities.
+
+config GTK2
+	bool "Gtk2"
+	default y
+        ---help---
+	  Elaborate display mode based on libgtk2.
+
+endmenu
+
+menu "Libraries / Dependencies"
+
+config LIBAUDIT
+	bool "Audit (libaudit)"
+	default y
+        ---help---
+	  Linux audit framework dependency.
+
+config LIBPERL
+	bool "Perl"
+	default y
+        ---help---
+	  Libperl dependency needed by the perf script feature.
+
+config LIBPYTHON
+	bool "Python"
+	default y
+        ---help---
+	  Libpython dependency needed by the perf script feature.
+
+choice
+	prompt "Elf library"
+	default LIBELF
+        ---help---
+	  Perf needs ELF files manipulation facilities. To fulfill
+	  these tasks, perf can rely on either the libelf library or a
+	  minimal builtin support.
+
+
+	config LIBELF
+	bool "elf"
+	---help---
+	  Libelf library.
+
+	config LIBELF_MINIMAL
+	bool "builtin support"
+	---help---
+	  Builtin elf support.
+endchoice
+
+config LIBUNWIND
+	bool "User space libunwind callchains"
+	default y
+        ---help---
+	  The library libunwind provides a portable C API to determine
+	  the call-chain of a program.
+
+config LIBUNWIND_DIR
+	string "libunwind directory"
+	depends on LIBUNWIND
+        ---help---
+	  Directory holding the libuwind dependency (headers +
+	  libraries).
+
+config NUMA
+	bool "Numa support (bench)"
+	default y
+        ---help---
+	  The library libnuma offers facilities to configure NUMA
+	  policies supported by the linux kernel.
+
+config DEMANGLE
+	bool "Demangle symbols"
+	default y
+        ---help---
+	  Enable demangling so as to display human-readable
+	  symbols. This option is convenient with C++ programs.
+
+config BIONIC
+	bool "Bionic support"
+	default n
+        ---help---
+	  The Bionic libc is a derivation of the BSD's standard C
+	  library code developed by Google for their Android operating
+	  system.
+
+endmenu
+
+menu "Build"
+config DEBUG
+	bool "Compile with debug info"
+	default n
+        ---help---
+	  Compile with debug info.
+
+config DEBUG_PARSER
+	bool "Compile with parsers debug info"
+	default n
+        ---help---
+	  Compile with parsers debug info.
+
+config BACKTRACE
+	bool "Compile with dump_stack support"
+	default y
+        ---help---
+	  Compile with dump_stack support.
+
+endmenu

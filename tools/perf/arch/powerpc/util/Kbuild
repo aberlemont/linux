@@ -1,0 +1,3 @@
+obj-y += header.o
+obj-y += skip-callchain-idx.o
+obj-y += dwarf-regs.o
