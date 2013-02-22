@@ -1,0 +1,126 @@
+obj-y += abspath.o
+obj-y += alias.o
+obj-y += annotate.o
+obj-y += bitmap.o
+obj-y += build-id.o
+obj-y += callchain.o
+obj-y += cgroup.o
+obj-y += color.o
+obj-y += comm.o
+obj-y += config.o
+obj-y += cpumap.o
+obj-y += ctype.o
+obj-y += db-export.o
+obj-y += debug.o
+obj-y += dso.o
+obj-y += environment.o
+obj-y += event.o
+obj-y += evlist.o
+obj-y += evsel.o
+obj-y += exec_cmd.o
+obj-y += header.o
+obj-y += help.o
+obj-y += hist.o
+obj-y += hweight.o
+obj-y += intlist.o
+obj-y += levenshtein.o
+obj-y += machine.o
+obj-y += map.o
+obj-y += pager.o
+obj-y += parse-options.o
+obj-y += path.o
+obj-y += pmu-flex.o
+obj-y += pmu-bison.o
+obj-y += pmu.o
+obj-y += pstack.o
+obj-y += quote.o
+obj-y += rblist.o
+obj-y += run-command.o
+obj-y += session.o
+obj-y += ordered-events.o
+obj-y += sigchain.o
+obj-y += sort.o
+obj-y += stat.o
+obj-y += record.o
+obj-y += srcline.o
+obj-y += data.o
+obj-y += strbuf.o
+obj-y += strfilter.o
+obj-y += string.o
+obj-y += strlist.o
+obj-y += svghelper.o
+obj-y += symbol.o
+obj-y += perf_regs.o
+obj-y += tsc.o
+obj-y += cloexec.o
+
+obj-$(CONFIG_LIBUNWIND) += unwind.o
+
+obj-$(CONFIG_LIBELF) += symbol-elf.o
+obj-$(CONFIG_LIBELF) += dwarf-aux.o
+obj-$(CONFIG_LIBELF) += probe-event.o
+obj-$(CONFIG_LIBELF) += probe-finder.o
+
+obj-$(CONFIG_LIBELF_MINIMAL) += symbol-minimal.o
+
+obj-y += target.o
+obj-y += thread.o
+obj-y += thread_map.o
+obj-y += top.o
+obj-y += usage.o
+obj-y += util.o
+obj-y += values.o
+obj-y += xyarray.o
+obj-y += vdso.o
+obj-y += wrapper.o
+obj-y += trace-event.o
+obj-y += trace-event-info.o
+obj-y += trace-event-parse.o
+obj-$(CONFIG_BUILTIN_SCRIPT) += trace-event-scripting.o
+obj-y += trace-event-read.o
+
+obj-$(CONFIG_BUILTIN_SCRIPT) += scripting-engines/
+
+define bison
+$(Q)echo '  BI      $@'
+$(Q)$(BISON) -v $< -d $(PARSER_DEBUG_BISON) -o $@ -p $1
+endef
+
+define flex
+$(Q)echo '  FL      $@';
+$(Q)$(FLEX) --header-file=$(basename $@).h $(PARSER_DEBUG_FLEX) -t $< > $@
+endef
+
+obj-y += parse-events-flex.o
+obj-y += parse-events-bison.o
+obj-y += parse-events.o
+
+$(obj)/parse-events-bison.c: $(src)/parse-events.y
+	$(call bison,parse_events_)
+
+$(obj)/parse-events-flex.c: $(src)/parse-events.l $(obj)/parse-events-bison.c
+	$(call flex)
+
+$(src)/parse-events-flex.o: $(src)/parse-events-flex.c
+$(src)/parse-events-bison.o: $(src)/parse-events-bison.c
+
+$(src)/parse-events.o: $(src)/parse-events-flex.o
+
+$(src)/pmu-bison.c: $(src)/pmu.y
+	$(call bison,perf_pmu_)
+
+$(src)/pmu-flex.c: $(src)/pmu.l $(src)/pmu-bison.c
+	$(call flex)
+
+$(src)/pmu-flex.o: $(src)/pmu-flex.c
+$(src)/pmu-bison.o: $(src)/pmu-bison.c
+
+CFLAGS_parse-events-flex.o  += -w
+CFLAGS_parse-events-bison.o += -DYYENABLE_NLS=0 -DYYLTYPE_IS_TRIVIAL=0 -w
+CFLAGS_parse-events.o  += -Wno-redundant-decls
+CFLAGS_pmu-flex.o  += -w
+CFLAGS_pmu-bison.o += -DYYENABLE_NLS=0 -DYYLTYPE_IS_TRIVIAL=0 -w
+
+CFLAGS_config.o += -D"ETC_PERFCONFIG=KBUILD_STR($(ETC_PERFCONFIG_SQ))"
+CFLAGS_exec_cmd.o += -D"PERF_EXEC_PATH=KBUILD_STR($(perfexecdir_SQ))"
+CFLAGS_exec_cmd.o += -D"PREFIX=KBUILD_STR($(prefix_SQ))"

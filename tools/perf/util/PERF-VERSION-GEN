@@ -9,6 +9,10 @@ GVF=${OUTPUT}PERF-VERSION-FILE
 LF='
 '
 
+if [ "${srctree}x" = "x" ]; then
+srctree=../..
+fi
+
 #
 # First check if there is a .git to get the version from git describe
 # otherwise try to get the version from the kernel Makefile

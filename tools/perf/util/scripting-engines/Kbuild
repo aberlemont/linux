@@ -1,0 +1,11 @@
+obj-$(CONFIG_LIBPERL)   += trace-event-perl.o
+obj-$(CONFIG_LIBPYTHON) += trace-event-python.o
+
+CFLAGS_trace-event-perl.o   := $(PERL_EMBED_CCOPTS)
+CFLAGS_trace-event-perl.o   += -Wno-redundant-decls -Wno-strict-prototypes
+CFLAGS_trace-event-perl.o   += -Wno-unused-parameter -Wno-shadow -Wno-undef
+CFLAGS_trace-event-perl.o   += -Wno-switch-default
+
+CFLAGS_trace-event-python.o := $(PYTHON_EMBED_CCOPTS)
+CFLAGS_trace-event-python.o += -Wno-redundant-decls -Wno-strict-prototypes
+CFLAGS_trace-event-python.o += -Wno-unused-parameter -Wno-shadow

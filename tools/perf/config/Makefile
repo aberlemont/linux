@@ -24,6 +24,7 @@ ifeq ($(ARCH),x86)
     CFLAGS += -DHAVE_ARCH_X86_64_SUPPORT
     ARCH_INCLUDE = ../../arch/x86/lib/memcpy_64.S ../../arch/x86/lib/memset_64.S
     LIBUNWIND_LIBS = -lunwind -lunwind-x86_64
+    CONFIG_X86_64=y
   else
     LIBUNWIND_LIBS = -lunwind -lunwind-x86
   endif
@@ -82,6 +83,10 @@ ifndef NO_LIBELF
   endif
   FEATURE_CHECK_CFLAGS-libdw-dwarf-unwind := $(LIBDW_CFLAGS)
   FEATURE_CHECK_LDFLAGS-libdw-dwarf-unwind := $(LIBDW_LDFLAGS) -ldw
+endif
+
+ifdef KCONFIG_CONFIG
+include $(src-perf)/config/Makefile.fix-legacy
 endif
 
 # include ARCH specific config
@@ -159,7 +164,7 @@ endif
 
 feature_check = $(eval $(feature_check_code))
 define feature_check_code
-  feature-$(1) := $(shell $(MAKE) OUTPUT=$(OUTPUT_FEATURES) CFLAGS="$(EXTRA_CFLAGS) $(FEATURE_CHECK_CFLAGS-$(1))" LDFLAGS="$(LDFLAGS) $(FEATURE_CHECK_LDFLAGS-$(1))" -C config/feature-checks test-$1.bin >/dev/null 2>/dev/null && echo 1 || echo 0)
+  feature-$(1) := $(shell $(MAKE) OUTPUT=$(OUTPUT_FEATURES) CFLAGS="$(EXTRA_CFLAGS) $(FEATURE_CHECK_CFLAGS-$(1))" LDFLAGS="$(LDFLAGS) $(FEATURE_CHECK_LDFLAGS-$(1))" -C $(src-perf)/config/feature-checks test-$1.bin >/dev/null 2>/dev/null && echo 1 || echo 0)
 endef
 
 feature_set = $(eval $(feature_set_code))
@@ -260,7 +265,7 @@ ifeq ($(feature-all), 1)
   #
   $(foreach feat,$(CORE_FEATURE_TESTS),$(call feature_set,$(feat)))
 else
-  $(shell $(MAKE) OUTPUT=$(OUTPUT_FEATURES) CFLAGS="$(EXTRA_CFLAGS)" LDFLAGS=$(LDFLAGS) -i -j -C config/feature-checks $(addsuffix .bin,$(CORE_FEATURE_TESTS)) >/dev/null 2>&1)
+  $(shell $(MAKE) OUTPUT=$(OUTPUT_FEATURES) CFLAGS="$(EXTRA_CFLAGS)" LDFLAGS=$(LDFLAGS) -i -j -C $(src-perf)/config/feature-checks $(addsuffix .bin,$(CORE_FEATURE_TESTS)) >/dev/null 2>&1)
   $(foreach feat,$(CORE_FEATURE_TESTS),$(call feature_check,$(feat)))
 endif
 
@@ -275,6 +280,7 @@ ifeq ($(DEBUG),0)
 endif
 
 CFLAGS += -I$(src-perf)/util/include
+CFLAGS += -I$(obj-perf)/include
 CFLAGS += -I$(src-perf)/arch/$(ARCH)/include
 CFLAGS += -I$(srctree)/tools/include/
 CFLAGS += -I$(srctree)/arch/$(ARCH)/include/uapi
@@ -797,3 +803,48 @@ endif
 ifeq ($(display_lib),1)
   $(info )
 endif
+
+ifdef CONFIG_DETECTED
+
+store = @echo "$(1)=$($(1))" >> $(CONFIG_DETECTED)
+
+all:
+	@echo "CONFIG_DETECTED_STORED=1" > $(CONFIG_DETECTED)
+	$(call store,ARCH)
+	$(call store,CROSS_COMPILE)
+	$(call store,CFLAGS)
+	$(call store,LDFLAGS)
+	$(call store,EXTLIBS)
+	$(call store,htmldir_SQ)
+	$(call store,infodir_SQ)
+	$(call store,mandir_SQ)
+	$(call store,perfexecdir_SQ)
+	$(call store,prefix_SQ)
+	$(call store,PARSER_DEBUG_BISON)
+	$(call store,PARSER_DEBUG_FLEX)
+	$(call store,PYTHON_EMBED_CCOPTS)
+	$(call store,PERL_EMBED_CCOPTS)
+	$(call store,CONFIG_X86_64)
+	$(call store,NO_LIBUNWIND)
+	$(call store,NO_LIBPERL)
+	$(call store,NO_LIBPYTHON)
+	$(call store,NO_NEWT)
+	$(call store,NO_GTK2)
+	$(call store,NO_DEMANGLE)
+	$(call store,NO_LIBELF)
+	$(call store,NO_LIBUNWIND)
+	$(call store,NO_BACKTRACE)
+	$(call store,NO_LIBNUMA)
+	$(call store,NO_LIBAUDIT)
+	$(call store,NO_LIBBIONIC)
+	$(call store,ETC_PERFCONFIG_SQ)
+	$(call store,DESTDIR_SQ)
+	$(call store,bindir_SQ)
+	$(call store,libdir_SQ)
+	$(call store,plugindir_SQ)
+	$(call store,perfexec_instdir_SQ)
+	$(call store,sysconfdir_SQ)
+	$(call store,GTK_CFLAGS)
+	$(call store,GTK_LIBS)
+
+endif # CONFIG_DETECTED

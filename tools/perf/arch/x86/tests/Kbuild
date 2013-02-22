@@ -1,0 +1,3 @@
+obj-y += perf-time-to-tsc.o
+obj-y += regs_load.o
+obj-y += dwarf-unwind.o

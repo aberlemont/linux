@@ -1,0 +1,54 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# Linux Kernel Configuration
+#
+
+#
+# Built-in commands
+#
+CONFIG_BUILTIN_RECORD=y
+CONFIG_BUILTIN_REPORT=y
+CONFIG_BUILTIN_STAT=y
+# CONFIG_BUILTIN_TOP is not set
+# CONFIG_BUILTIN_ANNOTATE is not set
+# CONFIG_BUILTIN_BENCH is not set
+# CONFIG_BUILTIN_BUILDID_CACHE is not set
+# CONFIG_BUILTIN_BUILDID_LIST is not set
+CONFIG_BUILTIN_DIFF=y
+# CONFIG_BUILTIN_EVLIST is not set
+CONFIG_BUILTIN_HELP=y
+# CONFIG_BUILTIN_INJECT is not set
+# CONFIG_BUILTIN_KMEM is not set
+# CONFIG_BUILTIN_KVM is not set
+# CONFIG_BUILTIN_LIST is not set
+# CONFIG_BUILTIN_LOCK is not set
+# CONFIG_BUILTIN_SCHED is not set
+CONFIG_BUILTIN_SCRIPT=y
+# CONFIG_BUILTIN_TIMECHART is not set
+# CONFIG_BUILTIN_TEST is not set
+
+#
+# Libraries
+#
+# CONFIG_LIBAUDIT is not set
+# CONFIG_LIBPERL is not set
+# CONFIG_LIBPYTHON is not set
+CONFIG_LIBELF=y
+# CONFIG_LIBELF_MINIMAL is not set
+CONFIG_BACKTRACE=y
+# CONFIG_LIBUNWIND is not set
+# CONFIG_NUMA is not set
+# CONFIG_DEMANGLE is not set
+
+#
+# GUI
+#
+CONFIG_STDIO=y
+# CONFIG_TUI is not set
+# CONFIG_GTK2 is not set
+
+#
+# Build
+#
+CONFIG_DEBUG=y
+# CONFIG_DEBUG_PARSER is not set

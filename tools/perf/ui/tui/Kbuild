@@ -1,0 +1,4 @@
+obj-y += helpline.o
+obj-y += progress.o
+obj-y += setup.o
+obj-y += util.o

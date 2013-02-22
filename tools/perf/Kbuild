@@ -1,0 +1,47 @@
+obj-y += perf.o
+
+obj-$(CONFIG_BUILTIN_ANNOTATE)      += builtin-annotate.o
+obj-$(CONFIG_BUILTIN_BENCH)         += builtin-bench.o
+obj-$(CONFIG_BUILTIN_BENCH)         += bench/
+obj-$(CONFIG_BUILTIN_BUILDID_CACHE) += builtin-buildid-cache.o
+obj-$(CONFIG_BUILTIN_BUILDID_LIST)  += builtin-buildid-list.o
+obj-$(CONFIG_BUILTIN_DIFF)          += builtin-diff.o
+obj-$(CONFIG_BUILTIN_EVLIST)        += builtin-evlist.o
+obj-$(CONFIG_BUILTIN_HELP)          += builtin-help.o
+obj-$(CONFIG_BUILTIN_INJECT)        += builtin-inject.o
+obj-$(CONFIG_BUILTIN_KMEM)          += builtin-kmem.o
+obj-$(CONFIG_BUILTIN_KVM)           += builtin-kvm.o
+obj-$(CONFIG_BUILTIN_LIST)          += builtin-list.o
+obj-$(CONFIG_BUILTIN_LOCK)          += builtin-lock.o
+obj-$(CONFIG_BUILTIN_PROBE)         += builtin-probe.o
+obj-$(CONFIG_BUILTIN_RECORD)        += builtin-record.o
+obj-$(CONFIG_BUILTIN_REPORT)        += builtin-report.o
+obj-$(CONFIG_BUILTIN_SCHED)         += builtin-sched.o
+obj-$(CONFIG_BUILTIN_SCRIPT)        += builtin-script.o
+obj-$(CONFIG_BUILTIN_STAT)          += builtin-stat.o
+obj-$(CONFIG_BUILTIN_TIMECHART)     += builtin-timechart.o
+obj-$(CONFIG_BUILTIN_TOP)           += builtin-top.o
+obj-$(CONFIG_BUILTIN_TRACE)         += builtin-trace.o
+obj-$(CONFIG_BUILTIN_MEM)           += builtin-mem.o
+obj-$(CONFIG_BUILTIN_TEST)          += tests/
+
+obj-y += ../../lib/rbtree.o
+obj-y += ../lib/symbol/kallsyms.o
+
+obj-y += util/
+obj-y += ui/
+obj-y += arch/
+
+obj-$(CONFIG_LIBPERL)   += scripts/perl/Perf-Trace-Util/
+obj-$(CONFIG_LIBPYTHON) += scripts/python/Perf-Trace-Util/
+
+CFLAGS_rbtree.o += -Wno-unused-parameter
+
+CFLAGS_perf.o += -D"PERF_HTML_PATH=KBUILD_STR($(htmldir_SQ))"
+CFLAGS_perf.o += -include PERF-VERSION-FILE
+
+$(obj)/perf.o: $(obj)/PERF-VERSION-FILE
+
+CFLAGS_builtin-help.o += -D"PERF_HTML_PATH=KBUILD_STR($(htmldir_SQ))"
+CFLAGS_builtin-help.o += -D"PERF_INFO_PATH=KBUILD_STR($(infodir_SQ))"
+CFLAGS_builtin-help.o += -D"PERF_MAN_PATH=KBUILD_STR($(mandir_SQ))"

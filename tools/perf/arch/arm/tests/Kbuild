@@ -1,0 +1,2 @@
+obj-y += regs_load.o
+obj-y += dwarf-unwind.o

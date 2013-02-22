@@ -1,0 +1,46 @@
+
+include $(KCONFIG_CONFIG)
+
+ifndef CONFIG_LIBPERL
+NO_LIBPERL := 1
+endif
+
+ifndef CONFIG_LIBPYTHON
+NO_LIBPYTHON := 1
+endif
+
+ifndef CONFIG_TUI
+NO_SLANG := 1
+endif
+
+ifndef CONFIG_GTK2
+NO_GTK2 := 1
+endif
+
+ifndef CONFIG_DEMANGLE
+NO_DEMANGLE := 1
+endif
+
+ifndef CONFIG_LIBELF
+NO_LIBELF := 1
+endif
+
+ifndef CONFIG_LIBUNWIND
+NO_LIBUNWIND := 1
+endif
+
+ifndef CONFIG_BACKTRACE
+NO_BACKTRACE := 1
+endif
+
+ifndef CONFIG_NUMA
+export NO_LIBNUMA := 1
+endif
+
+ifndef CONFIG_LIBAUDIT
+NO_LIBAUDIT := 1
+endif
+
+ifdef CONFIG_BIONIC
+NO_LIBBIONIC := 1
+endif

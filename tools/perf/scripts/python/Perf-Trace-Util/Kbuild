@@ -1,0 +1,5 @@
+obj-y += Context.o
+
+CFLAGS_Context.o := $(PYTHON_EMBED_CCOPTS)
+CFLAGS_Context.o += -Wno-redundant-decls -Wno-strict-prototypes
+CFLAGS_Context.o += -Wno-unused-parameter -Wno-nested-externs

@@ -15,7 +15,7 @@ struct cmdname_help
 
 static struct cmdname_help common_cmds[] = {"
 
-sed -n -e 's/^perf-\([^ 	]*\)[ 	].* common.*/\1/p' command-list.txt |
+sed -n -e 's/^perf-\([^ 	]*\)[ 	].* common.*/\1/p' $1/command-list.txt |
 sort |
 while read cmd
 do
@@ -26,12 +26,12 @@ do
             x
             s/.*perf-'"$cmd"' - \(.*\)/  {"'"$cmd"'", "\1"},/
 	    p
-     }' "Documentation/perf-$cmd.txt"
+     }' "$1/Documentation/perf-$cmd.txt"
      echo "#endif"
 done
 
 echo "#ifdef HAVE_LIBELF_SUPPORT"
-sed -n -e 's/^perf-\([^ 	]*\)[ 	].* full.*/\1/p' command-list.txt |
+sed -n -e 's/^perf-\([^ 	]*\)[ 	].* full.*/\1/p' $1/command-list.txt |
 sort |
 while read cmd
 do
@@ -42,7 +42,7 @@ do
             x
             s/.*perf-'"$cmd"' - \(.*\)/  {"'"$cmd"'", "\1"},/
 	    p
-     }' "Documentation/perf-$cmd.txt"
+     }' "$1/Documentation/perf-$cmd.txt"
      echo "#endif"
 done
 echo "#endif /* HAVE_LIBELF_SUPPORT */"

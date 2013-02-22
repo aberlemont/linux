@@ -1,0 +1,3 @@
+obj-y += dwarf-regs.o
+obj-$(CONFIG_LIBUNWIND) += unwind-libunwind.o
+obj-y += unwind-libdw.o

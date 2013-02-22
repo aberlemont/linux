@@ -8,6 +8,8 @@
 #include <linux/perf_event.h>
 #include <asm/unistd.h>
 
+#include "generated/autoconf.h"
+
 #if defined(__i386__)
 #define mb()		asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
 #define wmb()		asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
@@ -181,7 +183,7 @@ sys_perf_event_open(struct perf_event_attr *attr,
 	fd = syscall(__NR_perf_event_open, attr, pid, cpu,
 		     group_fd, flags);
 
-#ifdef HAVE_ATTR_TEST
+#ifdef CONFIG_BUILTIN_TEST
 	if (unlikely(test_attr__enabled))
 		test_attr__open(attr, pid, cpu, fd, group_fd, flags);
 #endif
