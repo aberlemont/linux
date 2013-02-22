@@ -17,6 +17,7 @@
  *
  * Released under the GPL v2. (and only v2, not any later version)
  */
+#include "generated/autoconf.h"
 #include "builtin.h"
 
 #include "perf.h"
@@ -534,6 +535,7 @@ static bool perf_top__handle_keypress(struct perf_top *top, int c)
 	return ret;
 }
 
+#ifdef CONFIG_TUI
 static void perf_top__sort_new_samples(void *arg)
 {
 	struct perf_top *t = arg;
@@ -586,6 +588,7 @@ static void *display_thread_tui(void *arg)
 	done = 1;
 	return NULL;
 }
+#endif /* CONFIG_TUI */
 
 static void display_sig(int sig __maybe_unused)
 {
@@ -926,9 +929,12 @@ static int perf_top__setup_sample_type(struct perf_top *top __maybe_unused)
 	return 0;
 }
 
+typedef void* (*display_fn_t)(void *);
+
 static int __cmd_top(struct perf_top *top)
 {
 	struct record_opts *opts = &top->record_opts;
+	display_fn_t display_fn = display_thread;
 	pthread_t thread;
 	int ret;
 
@@ -965,8 +971,8 @@ static int __cmd_top(struct perf_top *top)
 	 * XXX 'top' still doesn't start workloads like record, trace, but should,
 	 * so leave the check here.
 	 */
-        if (!target__none(&opts->target))
-                perf_evlist__enable(top->evlist);
+	if (!target__none(&opts->target))
+		perf_evlist__enable(top->evlist);
 
 	/* Wait for a minimal set of events before starting the snapshot */
 	perf_evlist__poll(top->evlist, 100);
@@ -974,8 +980,13 @@ static int __cmd_top(struct perf_top *top)
 	perf_top__mmap_read(top);
 
 	ret = -1;
-	if (pthread_create(&thread, NULL, (use_browser > 0 ? display_thread_tui :
-							    display_thread), top)) {
+
+#ifdef CONFIG_TUI
+	if (use_browser > 0)
+		display_fn = display_thread_tui;
+#endif
+
+	if (pthread_create(&thread, NULL, display_fn, top)) {
 		ui__error("Could not create display thread.\n");
 		goto out_delete;
 	}

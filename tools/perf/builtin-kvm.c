@@ -1556,20 +1556,25 @@ int cmd_kvm(int argc, const char **argv, const char *prefix __maybe_unused)
 
 	if (!strncmp(argv[0], "rec", 3))
 		return __cmd_record(file_name, argc, argv);
-	else if (!strncmp(argv[0], "rep", 3))
+
+	if (!strncmp(argv[0], "rep", 3))
 		return __cmd_report(file_name, argc, argv);
-	else if (!strncmp(argv[0], "diff", 4))
+
+	if (!strncmp(argv[0], "diff", 4))
 		return cmd_diff(argc, argv, NULL);
-	else if (!strncmp(argv[0], "top", 3))
+
+	if (!strncmp(argv[0], "top", 3))
 		return cmd_top(argc, argv, NULL);
-	else if (!strncmp(argv[0], "buildid-list", 12))
+
+	if (!strncmp(argv[0], "buildid-list", 12))
 		return __cmd_buildid_list(file_name, argc, argv);
+
 #ifdef HAVE_KVM_STAT_SUPPORT
-	else if (!strncmp(argv[0], "stat", 4))
+	if (!strncmp(argv[0], "stat", 4))
 		return kvm_cmd_stat(file_name, argc, argv);
 #endif
-	else
-		usage_with_options(kvm_usage, kvm_options);
+
+	usage_with_options(kvm_usage, kvm_options);
 
 	return 0;
 }

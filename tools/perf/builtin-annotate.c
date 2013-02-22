@@ -5,6 +5,7 @@
  * look up and read DSOs and symbol information and display
  * a histogram of results, along various sorting keys.
  */
+#include "generated/autoconf.h"
 #include "builtin.h"
 
 #include "util/util.h"
@@ -115,7 +116,7 @@ static void hists__find_annotations(struct hists *hists,
 				    struct perf_evsel *evsel,
 				    struct perf_annotate *ann)
 {
-	struct rb_node *nd = rb_first(&hists->entries), *next;
+	struct rb_node *nd = rb_first(&hists->entries);
 	int key = K_RIGHT;
 
 	while (nd) {
@@ -154,7 +155,9 @@ find_next:
 
 			/* skip missing symbols */
 			nd = rb_next(nd);
+#ifdef CONFIG_TUI
 		} else if (use_browser == 1) {
+			struct rb_node *next = NULL;
 			key = hist_entry__tui_annotate(he, evsel, NULL);
 			switch (key) {
 			case -1:
@@ -173,6 +176,7 @@ find_next:
 
 			if (next != NULL)
 				nd = next;
+#endif /* CONFIG_TUI */
 		} else {
 			hist_entry__tty_annotate(he, evsel, ann);
 			nd = rb_next(nd);
@@ -299,7 +303,9 @@ int cmd_annotate(int argc, const char **argv, const char *prefix __maybe_unused)
 	OPT_BOOLEAN('D', "dump-raw-trace", &dump_trace,
 		    "dump raw trace in ASCII"),
 	OPT_BOOLEAN(0, "gtk", &annotate.use_gtk, "Use the GTK interface"),
+#ifdef CONFIG_TUI
 	OPT_BOOLEAN(0, "tui", &annotate.use_tui, "Use the TUI interface"),
+#endif /* CONFIG_TUI */
 	OPT_BOOLEAN(0, "stdio", &annotate.use_stdio, "Use the stdio interface"),
 	OPT_STRING('k', "vmlinux", &symbol_conf.vmlinux_name,
 		   "file", "vmlinux pathname"),

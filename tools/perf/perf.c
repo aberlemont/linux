@@ -7,6 +7,7 @@
  * perf top, perf record, perf report, etc.) are started.
  */
 #include "builtin.h"
+#include "builtin-cmds.h"
 
 #include "util/exec_cmd.h"
 #include "util/cache.h"
@@ -34,34 +35,74 @@ struct cmd_struct {
 };
 
 static struct cmd_struct commands[] = {
+#ifdef CONFIG_BUILTIN_BUILDID_CACHE
 	{ "buildid-cache", cmd_buildid_cache, 0 },
+#endif
+#ifdef CONFIG_BUILTIN_BUILDID_LIST
 	{ "buildid-list", cmd_buildid_list, 0 },
+#endif
+#ifdef CONFIG_BUILTIN_DIFF
 	{ "diff",	cmd_diff,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_EVLIST
 	{ "evlist",	cmd_evlist,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_HELP
 	{ "help",	cmd_help,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_LIST
 	{ "list",	cmd_list,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_RECORD
 	{ "record",	cmd_record,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_REPORT
 	{ "report",	cmd_report,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_BENCH
 	{ "bench",	cmd_bench,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_STAT
 	{ "stat",	cmd_stat,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_TIMECHART
 	{ "timechart",	cmd_timechart,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_TOP
 	{ "top",	cmd_top,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_ANNOTATE
 	{ "annotate",	cmd_annotate,	0 },
+#endif
 	{ "version",	cmd_version,	0 },
+#ifdef CONFIG_BUILTIN_SCRIPT
 	{ "script",	cmd_script,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_SCHED
 	{ "sched",	cmd_sched,	0 },
-#ifdef HAVE_LIBELF_SUPPORT
+#endif
+#if defined HAVE_LIBELF_SUPPORT && defined CONFIG_BUILTIN_PROBE
 	{ "probe",	cmd_probe,	0 },
 #endif
+#ifdef CONFIG_BUILTIN_KMEM
 	{ "kmem",	cmd_kmem,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_LOCK
 	{ "lock",	cmd_lock,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_KVM
 	{ "kvm",	cmd_kvm,	0 },
+#endif
 	{ "test",	cmd_test,	0 },
-#ifdef HAVE_LIBAUDIT_SUPPORT
+#if defined HAVE_LIBAUDIT_SUPPORT && defined CONFIG_BUILTIN_TRACE
 	{ "trace",	cmd_trace,	0 },
 #endif
+#ifdef CONFIG_BUILTIN_INJECT
 	{ "inject",	cmd_inject,	0 },
+#endif
+#ifdef CONFIG_BUILTIN_MEM
 	{ "mem",	cmd_mem,	0 },
+#endif
 };
 
 struct pager_config {
