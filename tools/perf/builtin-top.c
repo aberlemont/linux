@@ -535,7 +535,7 @@ static bool perf_top__handle_keypress(struct perf_top *top, int c)
 	return ret;
 }
 
-#ifdef CONFIG_TUI
+#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
 static void perf_top__sort_new_samples(void *arg)
 {
 	struct perf_top *t = arg;
@@ -981,7 +981,7 @@ static int __cmd_top(struct perf_top *top)
 
 	ret = -1;
 
-#ifdef CONFIG_TUI
+#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
 	if (use_browser > 0)
 		display_fn = display_thread_tui;
 #endif

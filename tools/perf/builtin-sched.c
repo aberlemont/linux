@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "builtin-cmds.h"
 #include "perf.h"
 
 #include "util/util.h"
@@ -1742,11 +1743,13 @@ int cmd_sched(int argc, const char **argv, const char *prefix __maybe_unused)
 	if (!argc)
 		usage_with_options(sched_usage, sched_options);
 
+#ifdef CONFIG_BUILTIN_SCRIPT
 	/*
 	 * Aliased to 'perf script' for now:
 	 */
 	if (!strcmp(argv[0], "script"))
 		return cmd_script(argc, argv, prefix);
+#endif
 
 	if (!strncmp(argv[0], "rec", 3)) {
 		return __cmd_record(argc, argv);
