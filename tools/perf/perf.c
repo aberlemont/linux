@@ -93,8 +93,10 @@ static struct cmd_struct commands[] = {
 #ifdef CONFIG_BUILTIN_KVM
 	{ "kvm",	cmd_kvm,	0 },
 #endif
+#ifdef CONFIG_BUILTIN_TEST
 	{ "test",	cmd_test,	0 },
-#if defined HAVE_LIBAUDIT_SUPPORT && defined CONFIG_BUILTIN_TRACE
+#endif
+#ifdef CONFIG_BUILTIN_TRACE
 	{ "trace",	cmd_trace,	0 },
 #endif
 #ifdef CONFIG_BUILTIN_INJECT
@@ -539,7 +541,7 @@ int main(int argc, const char **argv)
 		goto out;
 	}
 	if (!prefixcmp(cmd, "trace")) {
-#ifdef HAVE_LIBAUDIT_SUPPORT
+#ifdef CONFIG_BUILTIN_TRACE
 		set_buildid_dir();
 		setup_path();
 		argv[0] = "trace";
@@ -563,13 +565,17 @@ int main(int argc, const char **argv)
 	} else {
 		/* The user didn't specify a command; give them help */
 		printf("\n usage: %s\n\n", perf_usage_string);
+#ifdef CONFIG_BUILTIN_HELP
 		list_common_cmds_help();
 		printf("\n %s\n\n", perf_more_info_string);
+#endif
 		goto out;
 	}
 	cmd = argv[0];
 
+#ifdef CONFIG_BUILTIN_TEST
 	test_attr__init();
+#endif
 
 	/*
 	 * We use PATH to find perf commands, but we prepend some higher

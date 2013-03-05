@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "builtin-cmds.h"
 #include "perf.h"
 
 #include "util/evlist.h"
@@ -995,9 +996,11 @@ int cmd_lock(int argc, const char **argv, const char *prefix __maybe_unused)
 				usage_with_options(report_usage, report_options);
 		}
 		rc = __cmd_report(false);
+#ifdef CONFIG_BUILTIN_SCRIPT
 	} else if (!strcmp(argv[0], "script")) {
 		/* Aliased to 'perf script' */
-		return cmd_script(argc, argv, prefix);
+		rc = cmd_script(argc, argv, prefix);
+#endif
 	} else if (!strcmp(argv[0], "info")) {
 		if (argc) {
 			argc = parse_options(argc, argv,

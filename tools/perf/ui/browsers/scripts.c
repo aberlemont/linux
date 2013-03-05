@@ -59,7 +59,11 @@ static int list_scripts(char *script_name)
 		paths[i] = names[i] + SCRIPT_NAMELEN;
 	}
 
+#ifdef CONFIG_BUILTIN_SCRIPT
 	num = find_scripts(names, paths);
+#else
+	num = 0;
+#endif
 	if (num > 0) {
 		choice = ui__popup_menu(num, names);
 		if (choice < num && choice >= 0) {
