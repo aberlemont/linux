@@ -18,6 +18,7 @@
 #include "util/data.h"
 
 #include "util/parse-options.h"
+#include <linux/kconfig.h>
 
 #include <linux/list.h>
 
@@ -237,7 +238,7 @@ static int perf_event__inject_buildid(struct perf_tool *tool,
 				 * account this as unresolved.
 				 */
 			} else {
-#ifdef HAVE_LIBELF_SUPPORT
+#ifdef CONFIG_LIBELF
 				pr_warning("no symbols found in %s, maybe "
 					   "install a debug package?\n",
 					   al.map->dso->long_name);
