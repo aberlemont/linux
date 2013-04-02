@@ -41,8 +41,6 @@ include config/utilities.mak
 #
 # Define NO_DEMANGLE if you do not want C++ symbol demangling.
 #
-# Define NO_LIBELF if you do not want libelf dependency (e.g. cross-builds)
-#
 # Define NO_LIBUNWIND if you do not want libunwind dependency for dwarf
 # backtrace post unwind.
 #
@@ -452,26 +450,19 @@ ifneq ($(OUTPUT),)
   CFLAGS += -I$(OUTPUT)
 endif
 
-ifdef NO_LIBELF
-EXTLIBS := $(filter-out -lelf,$(EXTLIBS))
-
-# Remove ELF/DWARF dependent codes
-LIB_OBJS := $(filter-out $(OUTPUT)util/symbol-elf.o,$(LIB_OBJS))
-LIB_OBJS := $(filter-out $(OUTPUT)util/dwarf-aux.o,$(LIB_OBJS))
-LIB_OBJS := $(filter-out $(OUTPUT)util/probe-event.o,$(LIB_OBJS))
-LIB_OBJS := $(filter-out $(OUTPUT)util/probe-finder.o,$(LIB_OBJS))
-
-BUILTIN_OBJS := $(filter-out $(OUTPUT)builtin-probe.o,$(BUILTIN_OBJS))
-
-# Use minimal symbol handling
-LIB_OBJS += $(OUTPUT)util/symbol-minimal.o
-
-else # NO_LIBELF
+ifdef CONFIG_LIBELF
 ifndef NO_DWARF
   LIB_OBJS += $(OUTPUT)util/probe-finder.o
   LIB_OBJS += $(OUTPUT)util/dwarf-aux.o
 endif # NO_DWARF
-endif # NO_LIBELF
+else # CONFIG_LIBELF
+  EXTLIBS := $(filter-out -lelf,$(EXTLIBS))
+  LIB_OBJS := $(filter-out $(OUTPUT)util/symbol-elf.o,$(LIB_OBJS))
+  LIB_OBJS := $(filter-out $(OUTPUT)util/probe-event.o,$(LIB_OBJS))
+  BUILTIN_OBJS := $(filter-out $(OUTPUT)builtin-probe.o,$(BUILTIN_OBJS))
+  # Use minimal symbol handling
+  LIB_OBJS += $(OUTPUT)util/symbol-minimal.o
+endif # CONFIG_LIBELF
 
 ifndef NO_LIBUNWIND
   LIB_OBJS += $(OUTPUT)util/unwind.o

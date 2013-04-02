@@ -248,44 +248,30 @@ ifndef NO_BIONIC
   endif
 endif
 
-ifdef NO_LIBELF
-  NO_DWARF := 1
-  NO_DEMANGLE := 1
-  NO_LIBUNWIND := 1
+ifdef CONFIG_LIBC
+  ifeq ($(feature-glibc), 0)
+    $(error No gnu/libc-version.h found, please install glibc-dev[el]/glibc-static or disable CONFIG_LIBC)
+  endif
+endif
+
+ifndef CONFIG_LIBELF
+
+  ifndef NO_DWARF
+    $(error DWARF depends on LIBELF)
+  endif
+
 else
-  ifeq ($(feature-libelf), 0)
-    ifeq ($(feature-glibc), 1)
-      LIBC_SUPPORT := 1
-    endif
-    ifeq ($(BIONIC),1)
-      LIBC_SUPPORT := 1
-    endif
-    ifeq ($(LIBC_SUPPORT),1)
-      msg := $(warning No libelf found, disables 'probe' tool, please install elfutils-libelf-devel/libelf-dev);
 
-      NO_LIBELF := 1
-      NO_DWARF := 1
-      NO_DEMANGLE := 1
-    else
-      msg := $(error No gnu/libc-version.h found, please install glibc-dev[el]/glibc-static);
-    endif
-  else
-    # for linking with debug library, run like:
-    # make DEBUG=1 LIBDW_DIR=/opt/libdw/
-    ifdef LIBDW_DIR
-      LIBDW_CFLAGS  := -I$(LIBDW_DIR)/include
-      LIBDW_LDFLAGS := -L$(LIBDW_DIR)/lib
-    endif
-
-    ifneq ($(feature-dwarf), 1)
-      msg := $(warning No libdw.h found or old libdw.h found or elfutils is older than 0.138, disables dwarf support. Please install new elfutils-devel/libdw-dev);
-      NO_DWARF := 1
-    endif # Dwarf support
-  endif # libelf support
-endif # NO_LIBELF
-
-ifndef NO_LIBELF
+  EXTLIBS += -lelf
   CFLAGS += -DHAVE_LIBELF_SUPPORT
+
+  FLAGS_LIBELF=$(CFLAGS) $(LDFLAGS) $(EXTLIBS)
+
+  # try to compile with libelf support ...
+  ifeq ($(feature-libelf), 0)
+    # ...it failed; let's stop everything
+    $(error No libelf found, please install elfutils-libelf-devel/libelf-dev or disable CONFIG_LIBELF)
+  endif # SOURCE_LIBELF
 
   ifeq ($(feature-libelf-mmap), 1)
     CFLAGS += -DHAVE_LIBELF_MMAP_SUPPORT
@@ -298,17 +284,33 @@ ifndef NO_LIBELF
   # include ARCH specific config
   -include $(src-perf)/arch/$(ARCH)/Makefile
 
+  # for linking with debug library, run like:
+  # make DEBUG=1 LIBDW_DIR=/opt/libdw/
+  ifdef LIBDW_DIR
+    LIBDW_CFLAGS  := -I$(LIBDW_DIR)/include
+    LIBDW_LDFLAGS := -L$(LIBDW_DIR)/lib
+  endif
+
+  # libelf supported - what about dwarf?
   ifndef NO_DWARF
-    ifeq ($(origin PERF_HAVE_DWARF_REGS), undefined)
-      msg := $(warning DWARF register mappings have not been defined for architecture $(ARCH), DWARF support disabled);
+
+    ifneq ($(feature-dwarf), 1)
+      $(warning No libdw.h found or old libdw.h found or elfutils is older than 0.138.ables dwarf support.)
       NO_DWARF := 1
     else
-      CFLAGS += -DHAVE_DWARF_SUPPORT $(LIBDW_CFLAGS)
-      LDFLAGS += $(LIBDW_LDFLAGS)
-      EXTLIBS += -lelf -ldw
-    endif # PERF_HAVE_DWARF_REGS
+      ifeq ($(origin PERF_HAVE_DWARF_REGS), undefined)
+        msg := $(warning DWARF register mappings have not been defined for architecture $(ARCH), DWARF support disabled);
+        NO_DWARF := 1
+      else
+        CFLAGS += -DHAVE_DWARF_SUPPORT $(LIBDW_CFLAGS)
+        LDFLAGS += $(LIBDW_LDFLAGS)
+        EXTLIBS += -lelf -ldw
+      endif # PERF_HAVE_DWARF_REGS
+    endif # Dwarf support
+
   endif # NO_DWARF
-endif # NO_LIBELF
+
+endif # CONFIG_LIBELF
 
 ifeq ($(LIBUNWIND_LIBS),)
   NO_LIBUNWIND := 1
