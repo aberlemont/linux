@@ -4,6 +4,7 @@
 #include "types.h"
 #include "event.h"
 #include "symbol.h"
+#include <linux/kconfig.h>
 
 struct unwind_entry {
 	struct map	*map;
@@ -13,7 +14,7 @@ struct unwind_entry {
 
 typedef int (*unwind_entry_cb_t)(struct unwind_entry *entry, void *arg);
 
-#ifdef HAVE_LIBUNWIND_SUPPORT
+#ifdef CONFIG_LIBUNWIND
 int unwind__get_entries(unwind_entry_cb_t cb, void *arg,
 			struct machine *machine,
 			struct thread *thread,
@@ -32,5 +33,5 @@ unwind__get_entries(unwind_entry_cb_t cb __maybe_unused,
 {
 	return 0;
 }
-#endif /* HAVE_LIBUNWIND_SUPPORT */
+#endif /* CONFIG_LIBUNWIND */
 #endif /* __UNWIND_H */
