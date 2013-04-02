@@ -13,8 +13,6 @@ include config/utilities.mak
 #
 # Define CROSS_COMPILE as prefix name of compiler if you want cross-builds.
 #
-# Define NO_LIBPERL to disable perl script extension.
-#
 # Define NO_LIBPYTHON to disable python script extension.
 #
 # Define PYTHON to point to the python binary if the default
@@ -518,7 +516,7 @@ install-gtk: $(OUTPUT)libperf-gtk.so
 		$(INSTALL) $(OUTPUT)libperf-gtk.so '$(DESTDIR_SQ)$(libdir_SQ)'
 endif
 
-ifndef NO_LIBPERL
+ifdef CONFIG_LIBPERL
   LIB_OBJS += $(OUTPUT)util/scripting-engines/trace-event-perl.o
   LIB_OBJS += $(OUTPUT)scripts/perl/Perf-Trace-Util/Context.o
 endif
