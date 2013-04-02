@@ -257,7 +257,10 @@ endif
 ifndef CONFIG_LIBELF
 
   NO_DWARF := 1
-  NO_DEMANGLE := 1
+
+  ifdef CONFIG_DEMANGLE
+    $(error CONFIG_DEMANGLE depends on LIBELF)
+  endif
 
   ifdef CONFIG_LIBUNWIND
     $(error CONFIG_LIBUNWIND depends on LIBELF)
@@ -449,30 +452,25 @@ ifeq ($(feature-libbfd), 1)
   EXTLIBS += -lbfd
 endif
 
-ifdef NO_DEMANGLE
-  CFLAGS += -DNO_DEMANGLE
-else
+ifdef CONFIG_DEMANGLE
   ifdef HAVE_CPLUS_DEMANGLE_SUPPORT
     EXTLIBS += -liberty
     CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
-  else
-    ifneq ($(feature-libbfd), 1)
-      $(call feature_check,liberty)
-      ifeq ($(feature-liberty), 1)
-        EXTLIBS += -lbfd -liberty
+  else ifneq ($(feature-libbfd), 1)
+    $(call feature_check,liberty)
+    ifeq ($(feature-liberty), 1)
+      EXTLIBS += -lbfd -liberty
+    else
+      $(call feature_check,liberty-z)
+      ifeq ($(feature-liberty-z), 1)
+        EXTLIBS += -lbfd -liberty -lz
       else
-        $(call feature_check,liberty-z)
-        ifeq ($(feature-liberty-z), 1)
-          EXTLIBS += -lbfd -liberty -lz
+        $(call feature_check,cplus-demangle)
+        ifeq ($(feature-cplus-demangle), 1)
+          EXTLIBS += -liberty
+          CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
         else
-          $(call feature_check,cplus-demangle)
-          ifeq ($(feature-cplus-demangle), 1)
-            EXTLIBS += -liberty
-            CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
-          else
-            msg := $(warning No bfd.h/libbfd found, install binutils-dev[el]/zlib-static to gain symbol demangling)
-            CFLAGS += -DNO_DEMANGLE
-          endif
+    $(error No bfd.h/libbfd found, install binutils-dev[el]/zlib-static to gain symbol demangling or unset CONFIG_DEMANGLE)
         endif
       endif
     endif
