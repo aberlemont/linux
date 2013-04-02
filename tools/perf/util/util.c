@@ -1,7 +1,8 @@
 #include "../perf.h"
 #include "util.h"
 #include <sys/mman.h>
-#ifdef HAVE_BACKTRACE_SUPPORT
+#include <linux/kconfig.h>
+#ifdef CONFIG_BACKTRACE
 #include <execinfo.h>
 #endif
 #include <stdio.h>
@@ -212,7 +213,7 @@ int hex2u64(const char *ptr, u64 *long_val)
 }
 
 /* Obtain a backtrace and print it to stdout. */
-#ifdef HAVE_BACKTRACE_SUPPORT
+#ifdef CONFIG_BACKTRACE
 void dump_stack(void)
 {
 	void *array[16];

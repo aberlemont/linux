@@ -485,9 +485,9 @@ ifndef NO_ON_EXIT
   endif
 endif
 
-ifndef NO_BACKTRACE
+ifdef CONFIG_BACKTRACE
   ifeq ($(feature-backtrace), 1)
-    CFLAGS += -DHAVE_BACKTRACE_SUPPORT
+    $(error backtrace not supported. Unset CONFIG_BACKTRACE)
   endif
 endif
 
