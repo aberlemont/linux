@@ -256,8 +256,11 @@ endif
 
 ifndef CONFIG_LIBELF
 
-  ifndef NO_DWARF
-    $(error DWARF depends on LIBELF)
+  NO_DWARF := 1
+  NO_DEMANGLE := 1
+
+  ifdef CONFIG_LIBUNWIND
+    $(error CONFIG_LIBUNWIND depends on LIBELF)
   endif
 
 else
@@ -312,39 +315,34 @@ else
 
 endif # CONFIG_LIBELF
 
-ifeq ($(LIBUNWIND_LIBS),)
-  NO_LIBUNWIND := 1
-endif
+ifdef CONFIG_LIBUNWIND
 
-ifndef NO_LIBUNWIND
-  #
+  ifeq ($(LIBUNWIND_LIBS),)
+    $(error LIBUNWIND_LIBS undefined. Please disable CONFIG_LIBUNWIND)
+  endif
+
   # For linking with debug library, run like:
-  #
-  #   make DEBUG=1 LIBUNWIND_DIR=/opt/libunwind/
-  #
+  # make DEBUG=1 LIBUNWIND_DIR=/opt/libunwind/
   ifdef LIBUNWIND_DIR
     LIBUNWIND_CFLAGS  := -I$(LIBUNWIND_DIR)/include
     LIBUNWIND_LDFLAGS := -L$(LIBUNWIND_DIR)/lib
   endif
 
   ifneq ($(feature-libunwind), 1)
-    msg := $(warning No libunwind found, disabling post unwind support. Please install libunwind-dev[el] >= 1.1);
-    NO_LIBUNWIND := 1
-  else
-    ifeq ($(ARCH),arm)
-      $(call feature_check,libunwind-debug-frame)
-      ifneq ($(feature-libunwind-debug-frame), 1)
-        msg := $(warning No debug_frame support found in libunwind);
-        CFLAGS += -DNO_LIBUNWIND_DEBUG_FRAME
-      endif
-    else
-      # non-ARM has no dwarf_find_debug_frame() function:
+    $(error No libunwind found. Please install libunwind-dev[el] >= 0.99 or disable CONFIG_LIBUNWIND)
+  endif
+
+  ifeq ($(ARCH),arm)
+    $(call feature_check,libunwind-debug-frame)
+    ifneq ($(feature-libunwind-debug-frame), 1)
+      msg := $(warning No debug_frame support found in libunwind);
       CFLAGS += -DNO_LIBUNWIND_DEBUG_FRAME
     endif
+  else
+    # non-ARM has no dwarf_find_debug_frame() function:
+    CFLAGS += -DNO_LIBUNWIND_DEBUG_FRAME
   endif
-endif
 
-ifndef NO_LIBUNWIND
   CFLAGS += -DHAVE_LIBUNWIND_SUPPORT
   EXTLIBS += $(LIBUNWIND_LIBS)
   CFLAGS += $(LIBUNWIND_CFLAGS)
