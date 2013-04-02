@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "util.h"
 #include "probe-event.h"
+#include <linux/kconfig.h>
 
 #define MAX_PROBE_BUFFER	1024
 #define MAX_PROBES		 128
@@ -15,7 +16,7 @@ static inline int is_c_varname(const char *name)
 	return isalpha(name[0]) || name[0] == '_';
 }
 
-#ifdef HAVE_DWARF_SUPPORT
+#ifdef CONFIG_DWARF
 
 #include "dwarf-aux.h"
 
@@ -106,6 +107,6 @@ struct line_finder {
 	int			found;
 };
 
-#endif /* HAVE_DWARF_SUPPORT */
+#endif /* CONFIG_DWARF */
 
 #endif /*_PROBE_FINDER_H */

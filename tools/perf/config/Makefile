@@ -307,7 +307,7 @@ else
       $(warning DWARF register mappings have not been defined for architecture $(ARCH), DWARF support disabled);
       $(error Please disable CONFIG_DWARF);
     else 
-      CFLAGS += -DHAVE_DWARF_SUPPORT $(LIBDW_CFLAGS)
+      CFLAGS += $(LIBDW_CFLAGS)
       LDFLAGS += $(LIBDW_LDFLAGS)
       EXTLIBS += -ldw
     endif # SOURCE_DWARF

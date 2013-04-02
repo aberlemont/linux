@@ -45,6 +45,7 @@
 #include "probe-event.h"
 #include "probe-finder.h"
 #include "session.h"
+#include <linux/kconfig.h>
 
 #define MAX_CMDLEN 256
 #define PERFPROBE_GROUP "probe"
@@ -200,7 +201,7 @@ static int convert_to_perf_probe_point(struct probe_trace_point *tp,
 	return 0;
 }
 
-#ifdef HAVE_DWARF_SUPPORT
+#ifdef CONFIG_DWARF
 /* Open new debuginfo of given module */
 static struct debuginfo *open_debuginfo(const char *module)
 {
@@ -629,7 +630,7 @@ int show_available_vars(struct perf_probe_event *pevs, int npevs,
 	return ret;
 }
 
-#else	/* !HAVE_DWARF_SUPPORT */
+#else	/* !CONFIG_DWARF */
 
 static int kprobe_convert_to_perf_probe(struct probe_trace_point *tp,
 					struct perf_probe_point *pp)
