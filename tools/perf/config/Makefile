@@ -409,66 +409,47 @@ else
   msg := $(warning No timerfd support. Disables 'perf kvm stat live');
 endif
 
-disable-python = $(eval $(disable-python_code))
-define disable-python_code
-  CFLAGS += -DNO_LIBPYTHON
-  $(if $(1),$(warning No $(1) was found))
-  $(warning Python support will not be built)
-  NO_LIBPYTHON := 1
-endef
+ifdef CONFIG_LIBPYTHON
 
-override PYTHON := \
-  $(call get-executable-or-default,PYTHON,python)
+  override PYTHON := \
+    $(call get-executable-or-default,PYTHON,python)
 
-ifndef PYTHON
-  $(call disable-python,python interpreter)
-else
+  ifndef PYTHON
+    $(error python interpreter not found. Install it or unset CONFIG_LIBPYTHON to continue.)
+  endif
 
   PYTHON_WORD := $(call shell-wordify,$(PYTHON))
 
-  ifdef NO_LIBPYTHON
-    $(call disable-python)
+  override PYTHON_CONFIG := \
+    $(call get-executable-or-default,PYTHON_CONFIG,$(PYTHON)-config)
+
+  PYTHON_CONFIG_SQ := $(call shell-sq,$(PYTHON_CONFIG))
+
+  PYTHON_EMBED_LDOPTS := $(shell $(PYTHON_CONFIG_SQ) --ldflags 2>/dev/null)
+  PYTHON_EMBED_LDFLAGS := $(call strip-libs,$(PYTHON_EMBED_LDOPTS))
+  PYTHON_EMBED_LIBADD := $(call grep-libs,$(PYTHON_EMBED_LDOPTS))
+  PYTHON_EMBED_CCOPTS := $(shell $(PYTHON_CONFIG_SQ) --cflags 2>/dev/null)
+  FLAGS_PYTHON_EMBED := $(PYTHON_EMBED_CCOPTS) $(PYTHON_EMBED_LDOPTS)
+
+  ifneq ($(feature-libpython), 1)
+    $(error python interpreter not found. Install it or unset CONFIG_LIBPYTHON to continue.)
+  endif
+
+  ifneq ($(feature-libpython-version), 1)
+    $(warning Python 3 is not yet supported; please set)
+    $(warning PYTHON and/or PYTHON_CONFIG appropriately.)
+    $(warning If you also have Python 2 installed, then)
+    $(warning try something like:)
+    $(warning $(and ,))
+    $(warning $(and ,)  make PYTHON=python2)
+    $(warning $(and ,))
+    $(warning Otherwise, disable Python support entirely by unsetting CONFIG_LIBPYTHON.
+    $(warning $(and ,))
+    $(error   $(and ,))
   else
-
-    override PYTHON_CONFIG := \
-      $(call get-executable-or-default,PYTHON_CONFIG,$(PYTHON)-config)
-
-    ifndef PYTHON_CONFIG
-      $(call disable-python,python-config tool)
-    else
-
-      PYTHON_CONFIG_SQ := $(call shell-sq,$(PYTHON_CONFIG))
-
-      PYTHON_EMBED_LDOPTS := $(shell $(PYTHON_CONFIG_SQ) --ldflags 2>/dev/null)
-      PYTHON_EMBED_LDFLAGS := $(call strip-libs,$(PYTHON_EMBED_LDOPTS))
-      PYTHON_EMBED_LIBADD := $(call grep-libs,$(PYTHON_EMBED_LDOPTS))
-      PYTHON_EMBED_CCOPTS := $(shell $(PYTHON_CONFIG_SQ) --cflags 2>/dev/null)
-      FLAGS_PYTHON_EMBED := $(PYTHON_EMBED_CCOPTS) $(PYTHON_EMBED_LDOPTS)
-
-      ifneq ($(feature-libpython), 1)
-        $(call disable-python,Python.h (for Python 2.x))
-      else
-
-        ifneq ($(feature-libpython-version), 1)
-          $(warning Python 3 is not yet supported; please set)
-          $(warning PYTHON and/or PYTHON_CONFIG appropriately.)
-          $(warning If you also have Python 2 installed, then)
-          $(warning try something like:)
-          $(warning $(and ,))
-          $(warning $(and ,)  make PYTHON=python2)
-          $(warning $(and ,))
-          $(warning Otherwise, disable Python support entirely:)
-          $(warning $(and ,))
-          $(warning $(and ,)  make NO_LIBPYTHON=1)
-          $(warning $(and ,))
-          $(error   $(and ,))
-        else
-          LDFLAGS += $(PYTHON_EMBED_LDFLAGS)
-          EXTLIBS += $(PYTHON_EMBED_LIBADD)
-          LANG_BINDINGS += $(obj-perf)python/perf.so
-        endif
-      endif
-    endif
+    LDFLAGS += $(PYTHON_EMBED_LDFLAGS)
+    EXTLIBS += $(PYTHON_EMBED_LIBADD)
+    LANG_BINDINGS += $(obj-perf)python/perf.so
   endif
 endif
 
