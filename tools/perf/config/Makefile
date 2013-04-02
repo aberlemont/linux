@@ -239,14 +239,14 @@ CFLAGS += -I$(LIB_INCLUDE)
 
 CFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
-ifndef NO_BIONIC
+ifdef CONFIG_BIONIC
   $(call feature_check,bionic)
-  ifeq ($(feature-bionic), 1)
-    BIONIC := 1
-    EXTLIBS := $(filter-out -lrt,$(EXTLIBS))
-    EXTLIBS := $(filter-out -lpthread,$(EXTLIBS))
+  ifneq ($(feature-bionic), 1)
+    $(error No anddroid api-level.h. Unset CONFIG_BIONIC to continue)
   endif
-endif
+  EXTLIBS := $(filter-out -lrt,$(EXTLIBS))
+  EXTLIBS := $(filter-out -lpthread,$(EXTLIBS))
+endif # CONFIG_BIONIC
 
 ifdef CONFIG_LIBC
   ifeq ($(feature-glibc), 0)
