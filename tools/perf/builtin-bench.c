@@ -18,6 +18,7 @@
 #include "util/parse-options.h"
 #include "builtin.h"
 #include "bench/bench.h"
+#include <linux/kconfig.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +33,7 @@ struct bench {
 	bench_fn_t	fn;
 };
 
-#ifdef HAVE_LIBNUMA_SUPPORT
+#ifdef CONFIG_LIBNUMA
 static struct bench numa_benchmarks[] = {
 	{ "mem",	"Benchmark for NUMA workloads",			bench_numa		},
 	{ "all",	"Test all NUMA benchmarks",			NULL			},
@@ -63,7 +64,7 @@ struct collection {
 static struct collection collections[] = {
 	{ "sched",	"Scheduler and IPC benchmarks",		sched_benchmarks	},
 	{ "mem",	"Memory access benchmarks",			mem_benchmarks		},
-#ifdef HAVE_LIBNUMA_SUPPORT
+#ifdef CONFIG_LIBNUMA
 	{ "numa",	"NUMA scheduling and MM benchmarks",		numa_benchmarks		},
 #endif
 	{ "all",	"All benchmarks",				NULL			},

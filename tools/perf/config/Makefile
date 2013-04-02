@@ -491,15 +491,14 @@ ifndef NO_BACKTRACE
   endif
 endif
 
-ifndef NO_LIBNUMA
+ifdef CONFIG_LIBNUMA
   ifeq ($(feature-libnuma), 0)
-    msg := $(warning No numa.h found, disables 'perf bench numa mem' benchmark, please install numa-libs-devel or libnuma-dev);
-    NO_LIBNUMA := 1
+    $(error No numa.h found. Please install numa-libs-devel or libnuma-dev or unset CONFIG_LIBNUMA)
   else
     CFLAGS += -DHAVE_LIBNUMA_SUPPORT
     EXTLIBS += -lnuma
-  endif
-endif
+  endif # SOURCE_LIBNUMA
+endif # CONFIG_LIBNUMA
 
 # Among the variables below, these:
 #   perfexecdir
