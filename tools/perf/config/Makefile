@@ -359,20 +359,14 @@ ifndef NO_LIBAUDIT
   endif
 endif
 
-ifdef NO_NEWT
-  NO_SLANG=1
-endif
-
-ifndef NO_SLANG
+ifdef CONFIG_SLANG
   ifneq ($(feature-libslang), 1)
-    msg := $(warning slang not found, disables TUI support. Please install slang-devel or libslang-dev);
-    NO_SLANG := 1
-  else
-    # Fedora has /usr/include/slang/slang.h, but ubuntu /usr/include/slang.h
-    CFLAGS += -I/usr/include/slang
-    CFLAGS += -DHAVE_SLANG_SUPPORT
-    EXTLIBS += -lslang
+    $(error slang not found. Please install slang-devel or libslang-dev or disable CONFIG_SLANG)
   endif
+  # Fedora has /usr/include/slang/slang.h, but ubuntu /usr/include/slang.h
+  CFLAGS += -I/usr/include/slang
+  CFLAGS += -DHAVE_SLANG_SUPPORT
+  EXTLIBS += -lslang
 endif
 
 ifdef CONFIG_GTK2
