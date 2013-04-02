@@ -256,7 +256,9 @@ endif
 
 ifndef CONFIG_LIBELF
 
-  NO_DWARF := 1
+  ifdef CONFIG_DWARF
+    $(error CONFIG_DWARF depends on LIBELF)
+  endif
 
   ifdef CONFIG_DEMANGLE
     $(error CONFIG_DEMANGLE depends on LIBELF)
@@ -298,23 +300,19 @@ else
   endif
 
   # libelf supported - what about dwarf?
-  ifndef NO_DWARF
-
+  ifdef CONFIG_DWARF
     ifneq ($(feature-dwarf), 1)
       $(warning No libdw.h found or old libdw.h found or elfutils is older than 0.138.ables dwarf support.)
-      NO_DWARF := 1
-    else
-      ifeq ($(origin PERF_HAVE_DWARF_REGS), undefined)
-        msg := $(warning DWARF register mappings have not been defined for architecture $(ARCH), DWARF support disabled);
-        NO_DWARF := 1
-      else
-        CFLAGS += -DHAVE_DWARF_SUPPORT $(LIBDW_CFLAGS)
-        LDFLAGS += $(LIBDW_LDFLAGS)
-        EXTLIBS += -lelf -ldw
-      endif # PERF_HAVE_DWARF_REGS
-    endif # Dwarf support
-
-  endif # NO_DWARF
+      $(error Please install new elfutils-devel/libdw-dev or disable CONFIG_DWARF);
+    else ifeq ($(origin PERF_HAVE_DWARF_REGS), undefined)
+      $(warning DWARF register mappings have not been defined for architecture $(ARCH), DWARF support disabled);
+      $(error Please disable CONFIG_DWARF);
+    else 
+      CFLAGS += -DHAVE_DWARF_SUPPORT $(LIBDW_CFLAGS)
+      LDFLAGS += $(LIBDW_LDFLAGS)
+      EXTLIBS += -ldw
+    endif # SOURCE_DWARF
+  endif # CONFIG_DWARF
 
 endif # CONFIG_LIBELF
 
