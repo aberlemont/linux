@@ -107,6 +107,9 @@ endif
 
 export prefix bindir sharedir sysconfdir
 
+# Read in config if it exists
+-include $(OUTPUT)include/config/auto.conf
+
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
 SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
@@ -297,6 +300,7 @@ LIB_H += ui/progress.h
 LIB_H += ui/util.h
 LIB_H += ui/ui.h
 LIB_H += util/data.h
+LIB_H += $(OUTPUT)include/generated/autoconf.h
 
 LIB_OBJS += $(OUTPUT)util/abspath.o
 LIB_OBJS += $(OUTPUT)util/alias.o
