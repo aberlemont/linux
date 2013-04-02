@@ -7,6 +7,7 @@
 #include "header.h"
 #include "color.h"
 #include "ui/progress.h"
+#include <linux/kconfig.h>
 
 extern struct callchain_param callchain_param;
 
@@ -189,7 +190,7 @@ struct hist_browser_timer {
 	int refresh;
 };
 
-#ifdef HAVE_SLANG_SUPPORT
+#ifdef CONFIG_SLANG
 #include "../ui/keysyms.h"
 int hist_entry__tui_annotate(struct hist_entry *he, struct perf_evsel *evsel,
 			     struct hist_browser_timer *hbt);
