@@ -58,10 +58,21 @@ define make
   @$(MAKE) -f Makefile.perf --no-print-directory -j$(JOBS) O=$(FULL_O) $(SET_DEBUG) $@
 endef
 
+define make_pconfig
+  @$(MAKE) -f Makefile.pconfig --no-print-directory O=$(FULL_O) $(SET_DEBUG) $@
+endef
+
+#
+# Config stuff
+#
+%config:
+	$(make_pconfig)
+
 #
 # Needed if no target specified:
 #
 all:
+	$(make_pconfig)
 	$(print_msg)
 	$(make)
 
@@ -69,6 +80,7 @@ all:
 # The clean target is not really parallel, don't print the jobs info:
 #
 clean:
+	$(make_pconfig)
 	$(make)
 
 #
@@ -77,3 +89,4 @@ clean:
 %:
 	$(print_msg)
 	$(make)
+

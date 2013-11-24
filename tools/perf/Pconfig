@@ -2,58 +2,214 @@ config ARCH
     string
     option env="ARCH"
 
+config HAVE_SLANG_SUPPORT
+    string
+    option env="HAVE_SLANG_SUPPORT"
+
+config HAVE_GTK2_SUPPORT
+    string
+    option env="HAVE_GTK2_SUPPORT"
+
+config HAVE_GTK2_INFO_BAR_SUPPORT
+    string
+    option env="HAVE_GTK2_INFO_BAR_SUPPORT"
+
+config HAVE_BIONIC_SUPPORT
+    string
+    option env="HAVE_BIONIC_SUPPORT"
+
+config HAVE_LIBC_SUPPORT
+    string
+    option env="HAVE_LIBC_SUPPORT"
+
+config HAVE_LIBELF_SUPPORT
+    string
+    option env="HAVE_LIBELF_SUPPORT"
+
+config HAVE_LIBELF_MMAP_SUPPORT
+    string
+    option env="HAVE_LIBELF_MMAP_SUPPORT"
+
+config HAVE_LIBELF_GETPHDRNUM_SUPPORT
+    string
+    option env="HAVE_LIBELF_GETPHDRNUM_SUPPORT"
+
+config HAVE_LIBUNWIND_SUPPORT
+    string
+    option env="HAVE_LIBUNWIND_SUPPORT"
+
+config HAVE_LIBUNWIND_DEBUG_FRAME_SUPPORT
+    string
+    option env="HAVE_LIBUNWIND_DEBUG_FRAME_SUPPORT"
+
+config HAVE_DWARF_SUPPORT
+    string
+    option env="HAVE_DWARF_SUPPORT"
+
+config HAVE_LIBBFD_SUPPORT
+    string
+    option env="HAVE_LIBBFD_SUPPORT"
+
+config HAVE_LIBIBERTY_SUPPORT
+    string
+    option env="HAVE_LIBIBERTY_SUPPORT"
+
+config HAVE_LIBIBERTY_Z_SUPPORT
+    string
+    option env="HAVE_LIBIBERTY_Z_SUPPORT"
+
+config HAVE_CPLUS_DEMANGLE_SUPPORT
+    string
+    option env="HAVE_CPLUS_DEMANGLE_SUPPORT"
+
+config HAVE_LIBPERL_SUPPORT
+    string
+    option env="HAVE_LIBPERL_SUPPORT"
+
+config HAVE_LIBPYTHON_SUPPORT
+    string
+    option env="HAVE_LIBPYTHON_SUPPORT"
+
+config PYTHON_CONFIG
+    string
+    option env="PYTHON_CONFIG"
+
+config HAVE_LIBAUDIT_SUPPORT
+    string
+    option env="HAVE_LIBAUDIT_SUPPORT"
+
+config HAVE_LIBNUMA_SUPPORT
+    string
+    option env="HAVE_LIBNUMA_SUPPORT"
+
+config HAVE_BACKTRACE_SUPPORT
+    string
+    option env="HAVE_BACKTRACE_SUPPORT"
+
 config X86
     def_bool y if ARCH = "x86"
     select HAVE_CFI_UNWIND_SUPPORT
+    select HAVE_DWARF_REGS
+
+config SPARC
+    def_bool y if ARCH = "sparc"
+    select HAVE_DWARF_REGS
+
+config SUPERH
+    def_bool y if ARCH = "sh"
+    select HAVE_DWARF_REGS
+
+config PPC
+    def_bool y if ARCH = "powerpc"
+    select HAVE_DWARF_REGS
+
+config ARM
+    def_bool y if ARCH = "arm"
+    select HAVE_DWARF_REGS
+
+config S390
+    def_bool y if ARCH = "s390"
+    select HAVE_DWARF_REGS
 
 config HAVE_CFI_UNWIND_SUPPORT
     bool
 
-config NEWT
-    bool "Enable newt-based TUI"
+config HAVE_DWARF_REGS
+    bool
+
+config SLANG
+    bool "Enable slang-based TUI"
+    depends on HAVE_SLANG_SUPPORT = "1"
+    default y if HAVE_SLANG_SUPPORT = "1"
 
 config GTK2
+    depends on HAVE_GTK2_SUPPORT = "1"
     bool "Enable GTK-based UI"
+    default y if HAVE_GTK2_SUPPORT = "1"
+
+config GTK2_INFO_BAR
+    depends on GTK2
+    def_bool y if HAVE_GTK2_INFO_BAR_SUPPORT = "1"
+
+config LIBC
+    def_bool y if HAVE_LIBC_SUPPORT = "1"
 
 config BIONIC
     bool "Enable support for Bionic (e.g., Android platform)"
+    depends on HAVE_BIONIC_SUPPORT = "1"
     default n
-    select LIBC
-
-config LIBC
-    bool "Development support for libc is available - glibc or bionic"
 
 config LIBELF
     bool "Enable support for libelf"
-    depends on !BIONIC && LIBC
+    depends on HAVE_LIBELF_SUPPORT = "1" && (BIONIC || LIBC)
+    default y if HAVE_LIBELF_SUPPORT = "1"
+
+config LIBELF_MMAP
+    def_bool y if LIBELF && HAVE_LIBELF_MMAP_SUPPORT = "1"
+
+config LIBELF_GETPHDRNUM
+    def_bool y if LIBELF && HAVE_LIBELF_GETPHDRNUM_SUPPORT = "1"
 
 config LIBUNWIND
     bool "Enable support for libunwind"
-    depends on HAVE_CFI_UNWIND_SUPPORT && LIBELF
+    depends on HAVE_LIBUNWIND_SUPPORT = "1"  && LIBELF
+    default y if HAVE_LIBUNWIND_SUPPORT = "1"
+
+config LIBUNWIND_DEBUG_FRAME
+    def_bool y if LIBUNWIND && HAVE_LIBUNWIND_DEBUG_FRAME_SUPPORT = "1"
 
 config DWARF
     bool "Enable support for dwarf"
-    depends on LIBELF
+    depends on (HAVE_DWARF_SUPPORT = "1") && HAVE_DWARF_REGS && LIBELF
+    default y if HAVE_DWARF_SUPPORT = "1"
 
- config DEMANGLE
+config DEMANGLE
     bool "Enable support for demangle"
-    depends on LIBELF
+    depends on LIBELF && ((HAVE_LIBBFD_SUPPORT = "1") || (HAVE_LIBIBERTY_SUPPORT = "1") || (HAVE_LIBIBERTY_Z_SUPPORT = "1") || (HAVE_CPLUS_DEMANGLE_SUPPORT = "1"))
+    default y if LIBELF && ((HAVE_LIBBFD_SUPPORT = "1") || (HAVE_LIBIBERTY_SUPPORT = "1") || (HAVE_LIBIBERTY_Z_SUPPORT = "1") || (HAVE_CPLUS_DEMANGLE_SUPPORT = "1"))
+
+config DEMANGLE_LIBBFD
+    def_bool y if DEMANGLE && (HAVE_LIBBFD_SUPPORT = "1")
+
+config DEMANGLE_LIBIBERTY
+    def_bool y if DEMANGLE && !DEMANGLE_LIBBFD && (HAVE_LIBIBERTY_SUPPORT = "1")
+
+config DEMANGLE_LIBIBERTY_Z
+    def_bool y if DEMANGLE && !DEMANGLE_LIBBFD && !DEMANGLE_LIBIBERTY && (HAVE_LIBIBERTY_Z_SUPPORT = "1")
+
+config CPLUS_DEMANGLE
+    def_bool y if DEMANGLE && !DEMANGLE_LIBBFD && !DEMANGLE_LIBIBERTY && DEMANGLE_LIBIBERTY_Z && (HAVE_CPLUS_DEMANGLE_SUPPORT = "1")
 
 config LIBPERL
     bool "Enable support for perl scripting engine"
+    depends on HAVE_LIBPERL_SUPPORT = "1"
+    default y if HAVE_LIBPERL_SUPPORT = "1"
 
 config LIBPYTHON
     bool "Enable support for python scripting engine"
+    depends on HAVE_LIBPYTHON_SUPPORT = "1"
+    default y if HAVE_LIBPYTHON_SUPPORT = "1"
+
+config PYTHON_CONFIG_PATH
+    string "Python config path"
+    depends on LIBPYTHON
+    default PYTHON_CONFIG
 
 config LIBAUDIT
     bool "Enable support for libaudit"
+    depends on HAVE_LIBAUDIT_SUPPORT = "1"
+    default y if HAVE_LIBAUDIT_SUPPORT = "1"
     help
         Used for perf trace tool.
 
 config LIBNUMA
     bool "Enable support for libnuma"
+    depends on HAVE_LIBNUMA_SUPPORT = "1"
+    default y if HAVE_LIBNUMA_SUPPORT = "1"
     help
         Used for 'perf bench numa mem' benchmark
 
 config BACKTRACE
     bool "Enable support for stack backtrace debugging"
+    depends on HAVE_BACKTRACE_SUPPORT = "1"
+    default y if HAVE_BACKTRACE_SUPPORT = "1"

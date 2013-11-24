@@ -67,6 +67,12 @@ ifeq ($(call get-executable,$(BISON)),)
   dummy := $(error Error: $(BISON) is missing on this system, please install it)
 endif
 
+override PYTHON := \
+  $(call get-executable-or-default,PYTHON,python)
+
+override PYTHON_CONFIG := \
+  $(call get-executable-or-default,PYTHON_CONFIG,$(PYTHON)-config)
+
 # Treat warnings as errors unless directed not to
 ifneq ($(WERROR),0)
   CFLAGS += -Werror
@@ -95,6 +101,8 @@ CFLAGS += -std=gnu99
 
 EXTLIBS = -lpthread -lrt -lm -ldl
 
+ifeq ($(CONFIG_CHECK_ENABLED),1)
+
 ifneq ($(OUTPUT),)
   OUTPUT_FEATURES = $(OUTPUT)config/feature-checks/
   $(shell mkdir -p $(OUTPUT_FEATURES))
@@ -102,7 +110,7 @@ endif
 
 feature_check = $(eval $(feature_check_code))
 define feature_check_code
-  feature-$(1) := $(shell $(MAKE) OUTPUT=$(OUTPUT_FEATURES) CFLAGS="$(EXTRA_CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBUNWIND_LIBS="$(LIBUNWIND_LIBS)" -C config/feature-checks test-$1 >/dev/null 2>/dev/null && echo 1 || echo 0)
+  feature-$(1) := $(shell $(MAKE) OUTPUT=$(OUTPUT_FEATURES) CFLAGS="$(EXTRA_CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBUNWIND_LIBS="$(LIBUNWIND_LIBS)" PYTHON_CONFIG="$(PYTHON_CONFIG)" -C config/feature-checks test-$1 >/dev/null 2>/dev/null && echo 1 || echo 0)
 endef
 
 feature_set = $(eval $(feature_set_code))
@@ -143,7 +151,11 @@ CORE_FEATURE_TESTS =			\
 	on-exit				\
 	stackprotector			\
 	stackprotector-all		\
-	timerfd
+	timerfd				\
+	bionic				\
+	liberty				\
+	liberty-z			\
+	cplus-demangle
 
 #
 # So here we detect whether test-all was rebuilt, to be able
@@ -205,6 +217,12 @@ ifeq ($(test-all-failed), 1)
   $(info )
 endif
 
+else # !CONFIG_CHECK_ENABLED
+
+-include include/config/auto.conf
+
+endif # CONFIG_CHECK_ENABLED
+
 ifeq ($(feature-stackprotector-all), 1)
   CFLAGS += -fstack-protector-all
 endif
@@ -219,6 +237,7 @@ ifeq ($(DEBUG),0)
   endif
 endif
 
+CFLAGS += -I$(src-perf)/include
 CFLAGS += -I$(src-perf)/util/include
 CFLAGS += -I$(src-perf)/arch/$(ARCH)/include
 CFLAGS += -I$(srctree)/arch/$(ARCH)/include/uapi
@@ -240,141 +259,39 @@ CFLAGS += -I$(LIB_INCLUDE)
 CFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 ifdef CONFIG_BIONIC
-  $(call feature_check,bionic)
-  ifneq ($(feature-bionic), 1)
-    $(error No anddroid api-level.h. Unset CONFIG_BIONIC to continue)
-  endif
   EXTLIBS := $(filter-out -lrt,$(EXTLIBS))
   EXTLIBS := $(filter-out -lpthread,$(EXTLIBS))
 endif # CONFIG_BIONIC
 
-ifdef CONFIG_LIBC
-  ifeq ($(feature-glibc), 0)
-    $(error No gnu/libc-version.h found, please install glibc-dev[el]/glibc-static or disable CONFIG_LIBC)
-  endif
-endif
-
-ifndef CONFIG_LIBELF
-
-  ifdef CONFIG_DWARF
-    $(error CONFIG_DWARF depends on LIBELF)
-  endif
-
-  ifdef CONFIG_DEMANGLE
-    $(error CONFIG_DEMANGLE depends on LIBELF)
-  endif
-
-  ifdef CONFIG_LIBUNWIND
-    $(error CONFIG_LIBUNWIND depends on LIBELF)
-  endif
-
-else
+ifdef CONFIG_LIBELF
 
   EXTLIBS += -lelf
-
-  FLAGS_LIBELF=$(CFLAGS) $(LDFLAGS) $(EXTLIBS)
-
-  # try to compile with libelf support ...
-  ifeq ($(feature-libelf), 0)
-    # ...it failed; let's stop everything
-    $(error No libelf found, please install elfutils-libelf-devel/libelf-dev or disable CONFIG_LIBELF)
-  endif # SOURCE_LIBELF
-
-  ifeq ($(feature-libelf-mmap), 1)
-    CFLAGS += -DHAVE_LIBELF_MMAP_SUPPORT
-  endif
-
-  ifeq ($(feature-libelf-getphdrnum), 1)
-    CFLAGS += -DHAVE_ELF_GETPHDRNUM_SUPPORT
-  endif
-
+  # TODO: to remove; already included above
   # include ARCH specific config
   -include $(src-perf)/arch/$(ARCH)/Makefile
 
-  # for linking with debug library, run like:
-  # make DEBUG=1 LIBDW_DIR=/opt/libdw/
-  ifdef LIBDW_DIR
-    LIBDW_CFLAGS  := -I$(LIBDW_DIR)/include
-    LIBDW_LDFLAGS := -L$(LIBDW_DIR)/lib
-  endif
-
   # libelf supported - what about dwarf?
   ifdef CONFIG_DWARF
-    ifneq ($(feature-dwarf), 1)
-      $(warning No libdw.h found or old libdw.h found or elfutils is older than 0.138.ables dwarf support.)
-      $(error Please install new elfutils-devel/libdw-dev or disable CONFIG_DWARF);
-    else ifeq ($(origin PERF_HAVE_DWARF_REGS), undefined)
-      $(warning DWARF register mappings have not been defined for architecture $(ARCH), DWARF support disabled);
-      $(error Please disable CONFIG_DWARF);
-    else 
-      CFLAGS += $(LIBDW_CFLAGS)
-      LDFLAGS += $(LIBDW_LDFLAGS)
-      EXTLIBS += -ldw
-    endif # SOURCE_DWARF
+    EXTLIBS += -ldw
   endif # CONFIG_DWARF
 
 endif # CONFIG_LIBELF
 
 ifdef CONFIG_LIBUNWIND
-
-  ifeq ($(LIBUNWIND_LIBS),)
-    $(error LIBUNWIND_LIBS undefined. Please disable CONFIG_LIBUNWIND)
-  endif
-
-  # For linking with debug library, run like:
-  # make DEBUG=1 LIBUNWIND_DIR=/opt/libunwind/
-  ifdef LIBUNWIND_DIR
-    LIBUNWIND_CFLAGS  := -I$(LIBUNWIND_DIR)/include
-    LIBUNWIND_LDFLAGS := -L$(LIBUNWIND_DIR)/lib
-  endif
-
-  ifneq ($(feature-libunwind), 1)
-    $(error No libunwind found. Please install libunwind-dev[el] >= 0.99 or disable CONFIG_LIBUNWIND)
-  endif
-
-  ifeq ($(ARCH),arm)
-    $(call feature_check,libunwind-debug-frame)
-    ifneq ($(feature-libunwind-debug-frame), 1)
-      msg := $(warning No debug_frame support found in libunwind);
-      CFLAGS += -DNO_LIBUNWIND_DEBUG_FRAME
-    endif
-  else
-    # non-ARM has no dwarf_find_debug_frame() function:
-    CFLAGS += -DNO_LIBUNWIND_DEBUG_FRAME
-  endif
-
   EXTLIBS += $(LIBUNWIND_LIBS)
-  CFLAGS += $(LIBUNWIND_CFLAGS)
-  LDFLAGS += $(LIBUNWIND_LDFLAGS)
 endif
 
 ifdef CONFIG_LIBAUDIT
-  ifneq ($(feature-libaudit), 1)
-    $(error No libaudit.h found, please install audit-libs-devel or libaudit-dev or disable CONFIG_LIBAUDIT)
-  else
-    EXTLIBS += -laudit
-  endif # SOURCE_LIBAUDIT
+  EXTLIBS += -laudit
 endif # CONFIG_LIBAUDIT
 
 ifdef CONFIG_SLANG
-  ifneq ($(feature-libslang), 1)
-    $(error slang not found. Please install slang-devel or libslang-dev or disable CONFIG_SLANG)
-  endif
   # Fedora has /usr/include/slang/slang.h, but ubuntu /usr/include/slang.h
   CFLAGS += -I/usr/include/slang
-  CFLAGS += -DHAVE_SLANG_SUPPORT
   EXTLIBS += -lslang
 endif
 
 ifdef CONFIG_GTK2
-  FLAGS_GTK2=$(CFLAGS) $(LDFLAGS) $(EXTLIBS) $(shell pkg-config --libs --cflags gtk+-2.0 2>/dev/null)
-  ifneq ($(feature-gtk2), 1)
-    $(error GTK2 not found. Please install gtk2-devel or libgtk2.0-dev or unset CONFIG_GTK2)
-  endif
-  ifeq ($(feature-gtk2-infobar), 1)
-    GTK_CFLAGS := -DHAVE_GTK_INFO_BAR_SUPPORT
-  endif
-  CFLAGS += -DHAVE_GTK2_SUPPORT
   GTK_CFLAGS += $(shell pkg-config --cflags gtk+-2.0 2>/dev/null)
   GTK_LIBS := $(shell pkg-config --libs gtk+-2.0 2>/dev/null)
   EXTLIBS += -ldl
@@ -384,12 +301,8 @@ grep-libs  = $(filter -l%,$(1))
 strip-libs = $(filter-out -l%,$(1))
 
 ifdef CONFIG_LIBPERL
-  ifneq ($(feature-libperl), 1)
-    $(error perl module ExtUtils::Embed not installed. Install it or unset CONFIG_LIBPERL to continue)
-  else
-    LDFLAGS += $(PERL_EMBED_LDFLAGS)
-    EXTLIBS += $(PERL_EMBED_LIBADD)
-  endif
+  LDFLAGS += $(PERL_EMBED_LDFLAGS)
+  EXTLIBS += $(PERL_EMBED_LIBADD)
 endif
 
 ifeq ($(feature-timerfd), 1)
@@ -399,80 +312,30 @@ else
 endif
 
 ifdef CONFIG_LIBPYTHON
-
-  override PYTHON := \
-    $(call get-executable-or-default,PYTHON,python)
-
-  ifndef PYTHON
-    $(error python interpreter not found. Install it or unset CONFIG_LIBPYTHON to continue.)
-  endif
-
-  PYTHON_WORD := $(call shell-wordify,$(PYTHON))
-
-  override PYTHON_CONFIG := \
-    $(call get-executable-or-default,PYTHON_CONFIG,$(PYTHON)-config)
-
-  PYTHON_CONFIG_SQ := $(call shell-sq,$(PYTHON_CONFIG))
-
+  PYTHON_CONFIG_SQ := $(call shell-sq,$(CONFIG_PYTHON_CONFIG_PATH))
   PYTHON_EMBED_LDOPTS := $(shell $(PYTHON_CONFIG_SQ) --ldflags 2>/dev/null)
   PYTHON_EMBED_LDFLAGS := $(call strip-libs,$(PYTHON_EMBED_LDOPTS))
   PYTHON_EMBED_LIBADD := $(call grep-libs,$(PYTHON_EMBED_LDOPTS))
   PYTHON_EMBED_CCOPTS := $(shell $(PYTHON_CONFIG_SQ) --cflags 2>/dev/null)
   FLAGS_PYTHON_EMBED := $(PYTHON_EMBED_CCOPTS) $(PYTHON_EMBED_LDOPTS)
-
-  ifneq ($(feature-libpython), 1)
-    $(error python interpreter not found. Install it or unset CONFIG_LIBPYTHON to continue.)
-  endif
-
-  ifneq ($(feature-libpython-version), 1)
-    $(warning Python 3 is not yet supported; please set)
-    $(warning PYTHON and/or PYTHON_CONFIG appropriately.)
-    $(warning If you also have Python 2 installed, then)
-    $(warning try something like:)
-    $(warning $(and ,))
-    $(warning $(and ,)  make PYTHON=python2)
-    $(warning $(and ,))
-    $(warning Otherwise, disable Python support entirely by unsetting CONFIG_LIBPYTHON.
-    $(warning $(and ,))
-    $(error   $(and ,))
-  else
-    LDFLAGS += $(PYTHON_EMBED_LDFLAGS)
-    EXTLIBS += $(PYTHON_EMBED_LIBADD)
-    LANG_BINDINGS += $(obj-perf)python/perf.so
-  endif
-endif
-
-ifeq ($(feature-libbfd), 1)
-  EXTLIBS += -lbfd
+  LDFLAGS += $(PYTHON_EMBED_LDFLAGS)
+  EXTLIBS += $(PYTHON_EMBED_LIBADD)
+  LANG_BINDINGS += $(obj-perf)python/perf.so
 endif
 
 ifdef CONFIG_DEMANGLE
-  ifdef HAVE_CPLUS_DEMANGLE_SUPPORT
-    EXTLIBS += -liberty
-    CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
-  else ifneq ($(feature-libbfd), 1)
-    $(call feature_check,liberty)
-    ifeq ($(feature-liberty), 1)
-      EXTLIBS += -lbfd -liberty
-    else
-      $(call feature_check,liberty-z)
-      ifeq ($(feature-liberty-z), 1)
-        EXTLIBS += -lbfd -liberty -lz
-      else
-        $(call feature_check,cplus-demangle)
-        ifeq ($(feature-cplus-demangle), 1)
-          EXTLIBS += -liberty
-          CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
-        else
-    $(error No bfd.h/libbfd found, install binutils-dev[el]/zlib-static to gain symbol demangling or unset CONFIG_DEMANGLE)
-        endif
-      endif
-    endif
+  ifdef CONFIG_DEMANGLE_LIBBFD
+    EXTLIBS += -lbfd
   endif
-endif
-
-ifneq ($(filter -lbfd,$(EXTLIBS)),)
-  CFLAGS += -DHAVE_LIBBFD_SUPPORT
+  ifdef CONFIG_DEMANGLE_LIBIBERTY
+    EXTLIBS += -lbfd -liberty
+  endif
+  ifdef CONFIG_DEMANGLE_LIBIBERTY_Z
+    EXTLIBS += -lbfd -liberty -lz
+  endif
+  ifdef CONFIG_CPLUS_DEMANGLE
+    EXTLIBS += -lbfd
+  endif
 endif
 
 ifndef NO_ON_EXIT
@@ -481,19 +344,8 @@ ifndef NO_ON_EXIT
   endif
 endif
 
-ifdef CONFIG_BACKTRACE
-  ifeq ($(feature-backtrace), 1)
-    $(error backtrace not supported. Unset CONFIG_BACKTRACE)
-  endif
-endif
-
 ifdef CONFIG_LIBNUMA
-  ifeq ($(feature-libnuma), 0)
-    $(error No numa.h found. Please install numa-libs-devel or libnuma-dev or unset CONFIG_LIBNUMA)
-  else
-    CFLAGS += -DHAVE_LIBNUMA_SUPPORT
-    EXTLIBS += -lnuma
-  endif # SOURCE_LIBNUMA
+  EXTLIBS += -lnuma
 endif # CONFIG_LIBNUMA
 
 # Among the variables below, these:

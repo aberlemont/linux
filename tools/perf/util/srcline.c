@@ -8,7 +8,7 @@
 #include "util/util.h"
 #include "util/debug.h"
 
-#ifdef HAVE_LIBBFD_SUPPORT
+#ifdef CONFIG_DEMANGLE_LIBBFD
 
 /*
  * Implement addr2line using libbfd.
@@ -172,7 +172,7 @@ static int addr2line(const char *dso_name, unsigned long addr,
 	return ret;
 }
 
-#else /* HAVE_LIBBFD_SUPPORT */
+#else /* CONFIG_DEMANGLE_LIBBFD */
 
 static int addr2line(const char *dso_name, unsigned long addr,
 		     char **file, unsigned int *line_nr)
@@ -219,7 +219,7 @@ out:
 	pclose(fp);
 	return ret;
 }
-#endif /* HAVE_LIBBFD_SUPPORT */
+#endif /* CONFIG_DEMANGLE_LIBBFD */
 
 char *get_srcline(struct dso *dso, unsigned long addr)
 {

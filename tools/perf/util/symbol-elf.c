@@ -4,11 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <linux/kconfig.h>
 
 #include "symbol.h"
 #include "debug.h"
 
-#ifndef HAVE_ELF_GETPHDRNUM_SUPPORT
+#ifndef CONFIG_LIBELF_GETPHDRNUM
 static int elf_getphdrnum(Elf *elf, size_t *dst)
 {
 	GElf_Ehdr gehdr;

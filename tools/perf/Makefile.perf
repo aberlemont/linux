@@ -13,8 +13,6 @@ include config/utilities.mak
 #
 # Define CROSS_COMPILE as prefix name of compiler if you want cross-builds.
 #
-# Define NO_LIBPYTHON to disable python script extension.
-#
 # Define PYTHON to point to the python binary if the default
 # `python' is not correct; for example: PYTHON=python2
 #
@@ -30,25 +28,6 @@ include config/utilities.mak
 # Define EXTRA_CFLAGS=-m64 or EXTRA_CFLAGS=-m32 as appropriate for cross-builds.
 #
 # Define WERROR=0 to disable treating any warnings as errors.
-#
-# Define NO_NEWT if you do not want TUI support. (deprecated)
-#
-# Define NO_SLANG if you do not want TUI support.
-#
-# Define NO_GTK2 if you do not want GTK+ GUI support.
-#
-# Define NO_DEMANGLE if you do not want C++ symbol demangling.
-#
-# Define NO_LIBUNWIND if you do not want libunwind dependency for dwarf
-# backtrace post unwind.
-#
-# Define NO_BACKTRACE if you do not want stack backtrace debug feature
-#
-# Define NO_LIBNUMA if you do not want numa perf benchmark
-#
-# Define NO_LIBAUDIT if you do not want libaudit support
-#
-# Define NO_LIBBIONIC if you do not want bionic support
 
 ifeq ($(srctree),)
 srctree := $(patsubst %/,%,$(dir $(shell pwd)))
@@ -97,12 +76,10 @@ endif
 
 ifeq ($(config),1)
 include config/Makefile
+include $(OUTPUT)include/config/auto.conf
 endif
 
 export prefix bindir sharedir sysconfdir
-
-# Read in config if it exists
--include $(OUTPUT)include/config/auto.conf
 
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
@@ -458,16 +435,16 @@ else # CONFIG_LIBELF
   LIB_OBJS += $(OUTPUT)util/symbol-minimal.o
 endif # CONFIG_LIBELF
 
-ifndef NO_LIBUNWIND
+ifdef CONFIG_LIBUNWIND
   LIB_OBJS += $(OUTPUT)util/unwind.o
 endif
 LIB_OBJS += $(OUTPUT)tests/keep-tracking.o
 
-ifndef NO_LIBAUDIT
+ifdef CONFIG_LIBAUDIT
   BUILTIN_OBJS += $(OUTPUT)builtin-trace.o
 endif
 
-ifndef NO_SLANG
+ifdef CONFIG_SLANG
   LIB_OBJS += $(OUTPUT)ui/browser.o
   LIB_OBJS += $(OUTPUT)ui/browsers/annotate.o
   LIB_OBJS += $(OUTPUT)ui/browsers/hists.o
@@ -484,7 +461,7 @@ ifndef NO_SLANG
   LIB_H += ui/libslang.h
 endif
 
-ifndef NO_GTK2
+ifdef CONFIG_GTK2
   ALL_PROGRAMS += $(OUTPUT)libperf-gtk.so
 
   GTK_OBJS += $(OUTPUT)ui/gtk/browser.o
@@ -503,12 +480,12 @@ endif
 
 ifdef CONFIG_LIBPERL
   LIB_OBJS += $(OUTPUT)util/scripting-engines/trace-event-perl.o
-  LIB_OBJS += $(OUTPUT)scripts/perl/Perf-Trace-Util/Context.o
+  LIB_OBJS += $(OUTPUT)perf-scripts/perl/Perf-Trace-Util/Context.o
 endif
 
-ifndef NO_LIBPYTHON
+ifdef config_LIBPYTHON
   LIB_OBJS += $(OUTPUT)util/scripting-engines/trace-event-python.o
-  LIB_OBJS += $(OUTPUT)scripts/python/Perf-Trace-Util/Context.o
+  LIB_OBJS += $(OUTPUT)perf-scripts/python/Perf-Trace-Util/Context.o
 endif
 
 ifeq ($(NO_PERF_REGS),0)
@@ -517,7 +494,7 @@ ifeq ($(NO_PERF_REGS),0)
   endif
 endif
 
-ifndef NO_LIBNUMA
+ifdef CONFIG_LIBNUMA
   BUILTIN_OBJS += $(OUTPUT)bench/numa.o
 endif
 
@@ -667,13 +644,13 @@ $(OUTPUT)util/parse-events.o: util/parse-events.c $(OUTPUT)PERF-CFLAGS
 $(OUTPUT)util/scripting-engines/trace-event-perl.o: util/scripting-engines/trace-event-perl.c $(OUTPUT)PERF-CFLAGS
 	$(QUIET_CC)$(CC) -o $@ -c $(CFLAGS) $(PERL_EMBED_CCOPTS) -Wno-redundant-decls -Wno-strict-prototypes -Wno-unused-parameter -Wno-shadow -Wno-undef -Wno-switch-default $<
 
-$(OUTPUT)scripts/perl/Perf-Trace-Util/Context.o: scripts/perl/Perf-Trace-Util/Context.c $(OUTPUT)PERF-CFLAGS
+$(OUTPUT)perf-scripts/perl/Perf-Trace-Util/Context.o: perf-scripts/perl/Perf-Trace-Util/Context.c $(OUTPUT)PERF-CFLAGS
 	$(QUIET_CC)$(CC) -o $@ -c $(CFLAGS) $(PERL_EMBED_CCOPTS) -Wno-redundant-decls -Wno-strict-prototypes -Wno-unused-parameter -Wno-nested-externs -Wno-undef -Wno-switch-default $<
 
 $(OUTPUT)util/scripting-engines/trace-event-python.o: util/scripting-engines/trace-event-python.c $(OUTPUT)PERF-CFLAGS
 	$(QUIET_CC)$(CC) -o $@ -c $(CFLAGS) $(PYTHON_EMBED_CCOPTS) -Wno-redundant-decls -Wno-strict-prototypes -Wno-unused-parameter -Wno-shadow $<
 
-$(OUTPUT)scripts/python/Perf-Trace-Util/Context.o: scripts/python/Perf-Trace-Util/Context.c $(OUTPUT)PERF-CFLAGS
+$(OUTPUT)perf-scripts/python/Perf-Trace-Util/Context.o: perf-scripts/python/Perf-Trace-Util/Context.c $(OUTPUT)PERF-CFLAGS
 	$(QUIET_CC)$(CC) -o $@ -c $(CFLAGS) $(PYTHON_EMBED_CCOPTS) -Wno-redundant-decls -Wno-strict-prototypes -Wno-unused-parameter -Wno-nested-externs $<
 
 $(OUTPUT)perf-%: %.o $(PERFLIBS)
@@ -811,21 +788,21 @@ install-bin: all install-gtk
 		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)'
 	$(call QUIET_INSTALL, perf-archive) \
 		$(INSTALL) $(OUTPUT)perf-archive -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)'
-ifndef NO_LIBPERL
+ifdef CONFIG_LIBPERL
 	$(call QUIET_INSTALL, perl-scripts) \
 		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'; \
-		$(INSTALL) scripts/perl/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'; \
-		$(INSTALL) scripts/perl/*.pl -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl'; \
+		$(INSTALL) perf-scripts/perl/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'; \
+		$(INSTALL) perf-scripts/perl/*.pl -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl'; \
 		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'; \
-		$(INSTALL) scripts/perl/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
+		$(INSTALL) perf-scripts/perl/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
 endif
-ifndef NO_LIBPYTHON
+ifdef CONFIG_LIBPYTHON
 	$(call QUIET_INSTALL, python-scripts) \
 		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'; \
 		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'; \
-		$(INSTALL) scripts/python/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'; \
-		$(INSTALL) scripts/python/*.py -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python'; \
-		$(INSTALL) scripts/python/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
+		$(INSTALL) perf-scripts/python/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'; \
+		$(INSTALL) perf-scripts/python/*.py -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python'; \
+		$(INSTALL) perf-scripts/python/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
 endif
 	$(call QUIET_INSTALL, bash_completion-script) \
 		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d'; \

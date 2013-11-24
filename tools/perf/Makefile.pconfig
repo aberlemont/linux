@@ -1,0 +1,135 @@
+
+ifeq ($(srctree),)
+srctree := $(patsubst %/,%,$(dir $(shell pwd)))
+srctree := $(patsubst %/,%,$(dir $(srctree)))
+#$(info Determined 'srctree' to be $(srctree))
+endif
+
+ifneq ($(OUTPUT),)
+#$(info Determined 'OUTPUT' to be $(OUTPUT))
+endif
+
+# SHELL used by kbuild
+CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
+	  else if [ -x /bin/bash ]; then echo /bin/bash; \
+	  else echo sh; fi ; fi)
+export CONFIG_SHELL
+
+LN    = ln -s
+RM    = rm -f
+MKDIR = mkdir
+
+# Mandatory declarations...
+FLEX    = flex
+BISON   = bison
+
+# We need some generic definitions (do not try to remake the file).
+HOSTCC       = gcc
+HOSTCXX      = g++
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
+HOSTCXXFLAGS = -O2
+export HOSTCC HOSTCXX HOSTCFLAGS HOSTCXXFLAGS
+
+include $(srctree)/scripts/Kbuild.include
+
+KBUILD_KCONFIG = $(srctree)/tools/perf/Pconfig
+export KBUILD_KCONFIG
+
+KCONFIG_CONFIG = .config
+
+CONFIG_CHECK_ENABLED := 0
+CONFIG_TARGETS := %config
+
+ifdef MAKECMDGOALS
+ifeq ($(filter-out $(CONFIG_TARGETS),$(MAKECMDGOALS)),)
+  CONFIG_CHECK_ENABLED := 1
+endif
+endif
+
+ifeq ($(CONFIG_CHECK_ENABLED),1)
+
+include config/Makefile
+
+HAVE_SLANG_SUPPORT = $(feature-libslang)
+HAVE_GTK2_SUPPORT = $(feature-gtk2)
+HAVE_GTK2_INFO_BAR_SUPPORT = $(feature-gtk2-infobar)
+HAVE_BIONIC_SUPPORT = $(feature-bionic)
+HAVE_LIBC_SUPPORT = $(feature-glibc)
+HAVE_LIBELF_SUPPORT = $(feature-libelf)
+HAVE_LIBELF_MMAP_SUPPORT = $(feature-libelf-getphdrnum)
+HAVE_LIBELF_GETPHDRNUM_SUPPORT = $(feature-libelf-getphdrnum)
+HAVE_LIBUNWIND_SUPPORT = $(feature-libunwind)
+HAVE_LIBUNWIND_DEBUG_FRAME_SUPPORT = $(feature-libunwind-debug-frame)
+HAVE_DWARF_SUPPORT = $(feature-dwarf)
+HAVE_LIBBFD_SUPPORT = $(feature-libbfd)
+HAVE_LIBIBERTY_SUPPORT = $(feature-liberty)
+HAVE_LIBIBERTY_Z_SUPPORT = $(feature-liberty-z)
+HAVE_CPLUS_DEMANGLE_SUPPORT = $(feature-cplus-demangle)
+HAVE_LIBPERL_SUPPORT = $(feature-libperl)
+HAVE_LIBPYTHON_SUPPORT = $(feature-libpython)
+ifneq ($(feature-libpython-version), 1)
+  HAVE_LIBPYTHON_SUPPORT = 0
+endif
+HAVE_LIBAUDIT_SUPPORT = $(feature-libaudit)
+HAVE_LIBNUMA_SUPPORT = $(feature-libnuma)
+HAVE_BACKTRACE_SUPPORT = $(feature-backtrace)
+
+export ARCH 
+export HAVE_SLANG_SUPPORT
+export HAVE_GTK2_SUPPORT HAVE_GTK2_INFO_BAR_SUPPORT
+export HAVE_BIONIC_SUPPORT HAVE_LIBC_SUPPORT
+export HAVE_LIBELF_SUPPORT HAVE_LIBELF_MMAP_SUPPORT HAVE_LIBELF_GETPHDRNUM_SUPPORT
+export HAVE_LIBUNWIND_SUPPORT HAVE_LIBUNWIND_DEBUG_FRAME_SUPPORT
+export HAVE_DWARF_SUPPORT
+export HAVE_LIBBFD_SUPPORT 
+export HAVE_LIBIBERTY_SUPPORT HAVE_LIBIBERTY_Z_SUPPORT 
+export HAVE_CPLUS_DEMANGLE_SUPPORT
+export HAVE_LIBPERL_SUPPORT
+export HAVE_LIBPYTHON_SUPPORT PYTHON_CONFIG
+export HAVE_LIBAUDIT_SUPPORT
+export HAVE_LIBNUMA_SUPPORT
+export HAVE_BACKTRACE_SUPPORT
+
+$(OUTPUT)scripts:
+	@$(LN) $(srctree)/scripts $@
+
+# Basic helpers built in scripts/
+PHONY += scripts_basic
+scripts_basic: $(OUTPUT)scripts
+	@$(MAKE) $(build)=$(srctree)/scripts/basic
+	@$(RM) .tmp_quiet_recordmcount
+
+# To avoid any implicit rule to kick in, define an empty command.
+scripts/basic/%: scripts_basic ;
+
+%config: scripts_basic
+	@$(MKDIR) -p include/config
+	@$(MAKE) $(build)=$(srctree)/scripts/kconfig $@
+	@test -f $(KCONFIG_CONFIG) && \
+	$(MAKE) $(build)=$(srctree)/scripts/kconfig silentoldconfig
+
+# To avoid any implicit rule to kick in, define an empty command.
+Makefile.pconfig: ;
+
+%: ;
+
+all: ;
+
+else # !CONFIG_CHECK_ENABLED
+
+include/config/auto.conf: $(KCONFIG_CONFIG)
+	$(warning Error: Perf configuration is invalid)
+	$(error Run 'make oldconfig' on perf src to fix it)
+
+all: include/config/auto.conf
+
+%: include/config/auto.conf
+
+clean:
+	@$(RM) $(OUTPUT)scripts
+
+endif # CONFIG_CHECK_ENABLED
+
+# Declare the contents of the .PHONY variable as phony.  We keep that
+# information in a variable so we can use it in if_changed and friends.
+.PHONY: $(PHONY) FORCE
