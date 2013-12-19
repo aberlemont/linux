@@ -305,12 +305,6 @@ ifdef CONFIG_LIBPERL
   EXTLIBS += $(PERL_EMBED_LIBADD)
 endif
 
-ifeq ($(feature-timerfd), 1)
-  CFLAGS += -DHAVE_TIMERFD_SUPPORT
-else
-  msg := $(warning No timerfd support. Disables 'perf kvm stat live');
-endif
-
 ifdef CONFIG_LIBPYTHON
   PYTHON_CONFIG_SQ := $(call shell-sq,$(CONFIG_PYTHON_CONFIG_PATH))
   PYTHON_EMBED_LDOPTS := $(shell $(PYTHON_CONFIG_SQ) --ldflags 2>/dev/null)
