@@ -426,7 +426,7 @@ ifdef CONFIG_LIBELF
   LIB_OBJS += $(OUTPUT)util/symbol-elf.o
   LIB_OBJS += $(OUTPUT)util/probe-event.o
   BUILTIN_OBJS += $(OUTPUT)builtin-probe.o
-  ifndef CONFIG_DWARF
+  ifdef CONFIG_DWARF
     LIB_OBJS += $(OUTPUT)util/probe-finder.o
     LIB_OBJS += $(OUTPUT)util/dwarf-aux.o
   endif # CONFIG_DWARF
