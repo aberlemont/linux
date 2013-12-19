@@ -338,12 +338,6 @@ ifdef CONFIG_DEMANGLE
   endif
 endif
 
-ifndef NO_ON_EXIT
-  ifeq ($(feature-on-exit), 1)
-    CFLAGS += -DHAVE_ON_EXIT_SUPPORT
-  endif
-endif
-
 ifdef CONFIG_LIBNUMA
   EXTLIBS += -lnuma
 endif # CONFIG_LIBNUMA

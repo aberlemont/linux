@@ -73,6 +73,7 @@ endif
 HAVE_LIBAUDIT_SUPPORT = $(feature-libaudit)
 HAVE_LIBNUMA_SUPPORT = $(feature-libnuma)
 HAVE_BACKTRACE_SUPPORT = $(feature-backtrace)
+HAVE_ON_EXIT = $(feature-on-exit)
 
 export ARCH 
 export HAVE_SLANG_SUPPORT
@@ -89,6 +90,7 @@ export HAVE_LIBPYTHON_SUPPORT PYTHON_CONFIG
 export HAVE_LIBAUDIT_SUPPORT
 export HAVE_LIBNUMA_SUPPORT
 export HAVE_BACKTRACE_SUPPORT
+export HAVE_ON_EXIT
 
 $(OUTPUT)scripts:
 	@$(LN) $(srctree)/scripts $@

@@ -31,7 +31,7 @@
 #include <sched.h>
 #include <sys/mman.h>
 
-#ifndef HAVE_ON_EXIT_SUPPORT
+#ifndef CONFIG_ON_EXIT
 #ifndef ATEXIT_MAX
 #define ATEXIT_MAX 32
 #endif
