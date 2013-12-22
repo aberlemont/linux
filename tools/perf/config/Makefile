@@ -5,13 +5,11 @@ ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
                                   -e s/s390x/s390/ -e s/parisc64/parisc/ \
                                   -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
                                   -e s/sh[234].*/sh/ -e s/aarch64.*/arm64/ )
-NO_PERF_REGS := 1
 CFLAGS := $(EXTRA_CFLAGS) $(EXTRA_WARNINGS)
 
 # Additional ARCH settings for x86
 ifeq ($(ARCH),i386)
   override ARCH := x86
-  NO_PERF_REGS := 0
   LIBUNWIND_LIBS = -lunwind -lunwind-x86
 endif
 
@@ -29,15 +27,10 @@ ifeq ($(ARCH),x86_64)
   else
     LIBUNWIND_LIBS = -lunwind -lunwind-x86
   endif
-  NO_PERF_REGS := 0
-endif
-ifeq ($(ARCH),arm)
-  NO_PERF_REGS := 0
-  LIBUNWIND_LIBS = -lunwind -lunwind-arm
 endif
 
-ifeq ($(NO_PERF_REGS),0)
-  CFLAGS += -DHAVE_PERF_REGS_SUPPORT
+ifeq ($(ARCH),arm)
+  LIBUNWIND_LIBS = -lunwind -lunwind-arm
 endif
 
 ifeq ($(src-perf),)

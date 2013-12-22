@@ -97,32 +97,37 @@ config HAVE_TIMERFD_SUPPORT
 config X86
     def_bool y if ARCH = "x86"
     select HAVE_CFI_UNWIND_SUPPORT
-    select HAVE_DWARF_REGS
+    select PERF_REGS
+    select DWARF_REGS
 
 config SPARC
     def_bool y if ARCH = "sparc"
-    select HAVE_DWARF_REGS
+    select DWARF_REGS
 
 config SUPERH
     def_bool y if ARCH = "sh"
-    select HAVE_DWARF_REGS
+    select DWARF_REGS
 
 config PPC
     def_bool y if ARCH = "powerpc"
-    select HAVE_DWARF_REGS
+    select DWARF_REGS
 
 config ARM
     def_bool y if ARCH = "arm"
-    select HAVE_DWARF_REGS
+    select PERF_REGS
+    select DWARF_REGS
 
 config S390
     def_bool y if ARCH = "s390"
-    select HAVE_DWARF_REGS
+    select DWARF_REGS
 
 config HAVE_CFI_UNWIND_SUPPORT
     bool
 
-config HAVE_DWARF_REGS
+config PERF_REGS
+    bool
+
+config DWARF_REGS
     bool
 
 config SLANG
@@ -168,7 +173,7 @@ config LIBUNWIND_DEBUG_FRAME
 
 config DWARF
     bool "Enable support for dwarf"
-    depends on (HAVE_DWARF_SUPPORT = "1") && HAVE_DWARF_REGS && LIBELF
+    depends on (HAVE_DWARF_SUPPORT = "1") && DWARF_REGS && LIBELF
     default y if HAVE_DWARF_SUPPORT = "1"
 
 config DEMANGLE
