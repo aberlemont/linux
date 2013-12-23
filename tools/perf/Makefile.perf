@@ -378,7 +378,11 @@ LIB_OBJS += $(OUTPUT)tests/code-reading.o
 LIB_OBJS += $(OUTPUT)tests/sample-parsing.o
 LIB_OBJS += $(OUTPUT)tests/parse-no-sample-id-all.o
 
+ifdef CONFIG_ANNOTATE
 BUILTIN_OBJS += $(OUTPUT)builtin-annotate.o
+endif
+
+ifdef CONFIG_BENCH
 BUILTIN_OBJS += $(OUTPUT)builtin-bench.o
 # Benchmark modules
 BUILTIN_OBJS += $(OUTPUT)bench/sched-messaging.o
@@ -389,26 +393,78 @@ BUILTIN_OBJS += $(OUTPUT)bench/mem-memset-x86-64-asm.o
 endif
 BUILTIN_OBJS += $(OUTPUT)bench/mem-memcpy.o
 BUILTIN_OBJS += $(OUTPUT)bench/mem-memset.o
+endif # CONFIG_BENCH
 
+ifdef CONFIG_DIFF
 BUILTIN_OBJS += $(OUTPUT)builtin-diff.o
+endif
+
+ifdef CONFIG_EVLIST
 BUILTIN_OBJS += $(OUTPUT)builtin-evlist.o
+endif
+
 BUILTIN_OBJS += $(OUTPUT)builtin-help.o
+
+ifdef CONFIG_SCHED
 BUILTIN_OBJS += $(OUTPUT)builtin-sched.o
+endif
+
+ifdef CONFIG_BUILDID
 BUILTIN_OBJS += $(OUTPUT)builtin-buildid-list.o
 BUILTIN_OBJS += $(OUTPUT)builtin-buildid-cache.o
+endif
+
+ifdef CONFIG_LIST
 BUILTIN_OBJS += $(OUTPUT)builtin-list.o
+endif
+
+ifdef CONFIG_RECORD
 BUILTIN_OBJS += $(OUTPUT)builtin-record.o
+endif
+
+ifdef CONFIG_REPORT
 BUILTIN_OBJS += $(OUTPUT)builtin-report.o
+endif
+
+ifdef CONFIG_STAT
 BUILTIN_OBJS += $(OUTPUT)builtin-stat.o
+endif
+
+ifdef CONFIG_TIMECHART
 BUILTIN_OBJS += $(OUTPUT)builtin-timechart.o
+endif
+
+ifdef CONFIG_TOP
 BUILTIN_OBJS += $(OUTPUT)builtin-top.o
+endif
+
+ifdef CONFIG_SCRIPT
 BUILTIN_OBJS += $(OUTPUT)builtin-script.o
+endif
+
+ifdef CONFIG_KMEM
 BUILTIN_OBJS += $(OUTPUT)builtin-kmem.o
+endif
+
+ifdef CONFIG_LOCK
 BUILTIN_OBJS += $(OUTPUT)builtin-lock.o
+endif
+
+ifdef CONFIG_KVM
 BUILTIN_OBJS += $(OUTPUT)builtin-kvm.o
+endif
+
+ifdef CONFIG_INJECT
 BUILTIN_OBJS += $(OUTPUT)builtin-inject.o
+endif
+
+ifdef CONFIG_TEST
 BUILTIN_OBJS += $(OUTPUT)tests/builtin-test.o
+endif
+
+ifdef CONFIG_MEM
 BUILTIN_OBJS += $(OUTPUT)builtin-mem.o
+endif
 
 PERFLIBS = $(LIB_FILE) $(LIBLK) $(LIBTRACEEVENT)
 

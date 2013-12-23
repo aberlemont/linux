@@ -34,34 +34,95 @@ struct cmd_struct {
 };
 
 static struct cmd_struct commands[] = {
+
+#ifdef CONFIG_LIBELF
 	{ "buildid-cache", cmd_buildid_cache, 0 },
 	{ "buildid-list", cmd_buildid_list, 0 },
+#endif
+
+#ifdef CONFIG_DIFF
 	{ "diff",	cmd_diff,	0 },
+#endif
+
+#ifdef CONFIG_EVLIST
 	{ "evlist",	cmd_evlist,	0 },
+#endif
+
 	{ "help",	cmd_help,	0 },
+
+#ifdef CONFIG_LIST
 	{ "list",	cmd_list,	0 },
+#endif
+
+#ifdef CONFIG_RECORD
 	{ "record",	cmd_record,	0 },
+#endif
+
+#ifdef CONFIG_REPORT
 	{ "report",	cmd_report,	0 },
+#endif
+
+#ifdef CONFIG_BENCH
 	{ "bench",	cmd_bench,	0 },
+#endif
+
+#ifdef CONFIG_STAT
 	{ "stat",	cmd_stat,	0 },
+#endif
+
+#ifdef CONFIG_TIMECHART
 	{ "timechart",	cmd_timechart,	0 },
+#endif
+
+#ifdef CONFIG_TOP
 	{ "top",	cmd_top,	0 },
+#endif
+
+#ifdef CONFIG_ANNOTATE
 	{ "annotate",	cmd_annotate,	0 },
+#endif
+
 	{ "version",	cmd_version,	0 },
+
+#ifdef CONFIG_SCRIPT
 	{ "script",	cmd_script,	0 },
+#endif
+
+#ifdef CONFIG_SCHED
 	{ "sched",	cmd_sched,	0 },
+#endif
+
 #ifdef CONFIG_LIBELF
 	{ "probe",	cmd_probe,	0 },
 #endif
+
+#ifdef CONFIG_KMEM
 	{ "kmem",	cmd_kmem,	0 },
+#endif
+
+#ifdef CONFIG_LOCK
 	{ "lock",	cmd_lock,	0 },
+#endif
+
+#ifdef CONFIG_KVM
 	{ "kvm",	cmd_kvm,	0 },
+#endif
+
+#ifdef CONFIG_TEST
 	{ "test",	cmd_test,	0 },
+#endif
+
 #ifdef CONFIG_LIBAUDIT
 	{ "trace",	cmd_trace,	0 },
 #endif
+
+#ifdef CONFIG_INJECT
 	{ "inject",	cmd_inject,	0 },
+#endif
+
+#ifdef CONFIG_MEM
 	{ "mem",	cmd_mem,	0 },
+#endif
 };
 
 struct pager_config {

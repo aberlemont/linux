@@ -239,3 +239,121 @@ config ON_EXIT
 
 config TIMERFD
     def_bool y if HAVE_TIMERFD_SUPPORT = "1"
+
+menu "Perf commands selection"
+
+config ANNOTATE
+    bool "Enable annotate command"
+    default y
+    help
+      Read perf.data (created by perf record) and display annotated
+      code
+
+config BENCH
+    bool "Enable bench command"
+    default y
+    help
+      General framework for benchmark suites
+
+config DIFF
+    bool "Enable diff command"
+    default y
+    help
+      Read perf.data files and display the differential profile
+
+config EVLIST
+    bool "Enable evlist command"
+    default y
+    help
+      List the event names in a perf.data file
+
+config SCHED
+    bool "Enable sched command"
+    default y
+    help
+      Tool to trace/measure scheduler properties (latencies)
+
+config BUILDID
+    bool "Enable buildid-related commands"
+    default y
+
+config LIST
+    bool "Enable list command"
+    default y
+    help
+      List all symbolic event types
+
+config RECORD
+    bool "Enable record command"
+    default y
+    help
+      Run a command and record its profile into perf.data
+
+config REPORT
+    bool "Enable report command"
+    default y
+    help
+      Read perf.data (created by perf record) and display the profile
+
+config STAT
+    bool "Enable stat command"
+    default y
+    help
+      Run a command and gather performance counter statistics
+
+config TIMECHART
+    bool "Enable timechart command"
+    default y
+    help
+      Tool to visualize total system behavior during a workload
+
+config TOP
+    bool "Enable top command"
+    default y
+    help
+      Interactive system profiling tool (just like top)
+
+config SCRIPT
+    bool "Enable script command"
+    depends on LIBPERL || LIBPYTHON
+    default y
+    help
+      Read perf.data (created by perf record) and display trace output
+
+config KMEM
+    bool "Enable kmem command"
+    default y
+    help
+      Tool to trace/measure kernel memory(slab) properties
+
+config LOCK
+    bool "Enable lock command"
+    default y
+    help
+      Analyze lock events
+
+config KVM
+    bool "Enable kvm command"
+    default y
+    help
+      Tool to trace/measure kvm guest os
+
+config INJECT
+    bool "Enable inject command"
+    default y
+    help
+      Filter to augment the events stream with additional information
+
+config TEST
+    bool "Enable test command"
+    default y
+    help
+      Runs sanity tests
+
+config MEM
+    bool "Enable mem command"
+    default y
+    help
+      Profile memory accesses
+
+endmenu # "Perf commands selection"
