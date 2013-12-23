@@ -21,7 +21,6 @@ ifeq ($(ARCH),x86_64)
   endif
   ifeq (${IS_X86_64}, 1)
     RAW_ARCH := x86_64
-    CFLAGS += -DHAVE_ARCH_X86_64_SUPPORT
     ARCH_INCLUDE = ../../arch/x86/lib/memcpy_64.S ../../arch/x86/lib/memset_64.S
     LIBUNWIND_LIBS = -lunwind -lunwind-x86_64
   else
@@ -346,7 +345,7 @@ endif # CONFIG_LIBNUMA
 # runtime figures out where they are based on the path to the executable.
 # This can help installing the suite in a relocatable way.
 
-# Make the path relative to DESTDIR, not to prefix
+# Makexb the path relative to DESTDIR, not to prefix
 ifndef DESTDIR
 prefix = $(HOME)
 endif

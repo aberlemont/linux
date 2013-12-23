@@ -50,6 +50,10 @@ ifeq ($(CONFIG_CHECK_ENABLED),1)
 
 include config/Makefile
 
+ifndef RAW_ARCH
+RAW_ARCH := undefined
+endif
+
 HAVE_SLANG_SUPPORT = $(feature-libslang)
 HAVE_GTK2_SUPPORT = $(feature-gtk2)
 HAVE_GTK2_INFO_BAR_SUPPORT = $(feature-gtk2-infobar)
@@ -76,7 +80,7 @@ HAVE_BACKTRACE_SUPPORT = $(feature-backtrace)
 HAVE_ON_EXIT_SUPPORT = $(feature-on-exit)
 HAVE_TIMERFD_SUPPORT = $(feature-timerfd)
 
-export ARCH 
+export ARCH RAW_ARCH
 export HAVE_SLANG_SUPPORT
 export HAVE_GTK2_SUPPORT HAVE_GTK2_INFO_BAR_SUPPORT
 export HAVE_BIONIC_SUPPORT HAVE_LIBC_SUPPORT

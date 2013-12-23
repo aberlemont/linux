@@ -1,10 +1,11 @@
 
 #include <errno.h>
 #include <libunwind.h>
+#include <linux/kconfig.h>
 #include "perf_regs.h"
 #include "../../util/unwind.h"
 
-#ifdef HAVE_ARCH_X86_64_SUPPORT
+#ifdef CONFIG_X86_64
 int unwind__arch_reg_id(int regnum)
 {
 	int id;
@@ -108,4 +109,4 @@ int unwind__arch_reg_id(int regnum)
 
 	return id;
 }
-#endif /* HAVE_ARCH_X86_64_SUPPORT */
+#endif /* CONFIG_X86_64 */

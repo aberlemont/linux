@@ -1,5 +1,7 @@
 
-#ifdef HAVE_ARCH_X86_64_SUPPORT
+#include <linux/kconfig.h>
+
+#ifdef CONFIG_X86_64
 
 #define MEMCPY_FN(fn, name, desc)		\
 	extern void *fn(void *, const void *, size_t);
