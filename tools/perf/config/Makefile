@@ -16,8 +16,6 @@ CFLAGS := $(EXTRA_CFLAGS) $(EXTRA_WARNINGS)
 
 include $(src-perf)/config/Makefile.arch
 
-NO_PERF_REGS := 1
-
 # Additional ARCH settings for x86
 ifeq ($(ARCH),x86)
   ifeq ($(IS_X86_64),1)
@@ -26,16 +24,13 @@ ifeq ($(ARCH),x86)
   else
     LIBUNWIND_LIBS = -lunwind -lunwind-x86
   endif
-  NO_PERF_REGS := 0
 endif
 
 ifeq ($(ARCH),arm)
-  NO_PERF_REGS := 0
   LIBUNWIND_LIBS = -lunwind -lunwind-arm
 endif
 
 ifeq ($(ARCH),arm64)
-  NO_PERF_REGS := 0
   LIBUNWIND_LIBS = -lunwind -lunwind-aarch64
 endif
 
@@ -66,10 +61,6 @@ else
   FEATURE_CHECK_LDFLAGS-libunwind = $(LIBUNWIND_LDFLAGS)
   FEATURE_CHECK_CFLAGS-libunwind-debug-frame = $(LIBUNWIND_CFLAGS)
   FEATURE_CHECK_LDFLAGS-libunwind-debug-frame = $(LIBUNWIND_LDFLAGS)
-endif
-
-ifeq ($(NO_PERF_REGS),0)
-  CFLAGS += -DHAVE_PERF_REGS_SUPPORT
 endif
 
 ifndef NO_LIBELF
@@ -301,12 +292,14 @@ ifeq ($(feature-sync-compare-and-swap), 1)
   CFLAGS += -DHAVE_SYNC_COMPARE_AND_SWAP_SUPPORT
 endif
 
-ifndef NO_BIONIC
+ifdef CONFIG_BIONIC
   $(call feature_check,bionic)
   ifeq ($(feature-bionic), 1)
     BIONIC := 1
     EXTLIBS := $(filter-out -lrt,$(EXTLIBS))
     EXTLIBS := $(filter-out -lpthread,$(EXTLIBS))
+  else
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_BIONIC)
   endif
 endif
 
@@ -433,12 +426,11 @@ ifndef NO_LIBUNWIND
   LDFLAGS += $(LIBUNWIND_LDFLAGS)
 endif
 
-ifndef NO_LIBAUDIT
+ifdef CONFIG_LIBAUDIT
   ifneq ($(feature-libaudit), 1)
-    msg := $(warning No libaudit.h found, disables 'trace' tool, please install audit-libs-devel or libaudit-dev);
-    NO_LIBAUDIT := 1
+    msg := $(warning No libaudit.h found, disables LIBAUDIT support and 'trace' tool, please install audit-libs-devel or libaudit-dev);
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBAUDIT)
   else
-    CFLAGS += -DHAVE_LIBAUDIT_SUPPORT
     EXTLIBS += -laudit
   endif
 endif
@@ -491,10 +483,11 @@ else
   endif
 endif
 
-ifeq ($(feature-timerfd), 1)
-  CFLAGS += -DHAVE_TIMERFD_SUPPORT
-else
-  msg := $(warning No timerfd support. Disables 'perf kvm stat live');
+ifdef CONFIG_TIMERFD
+  ifneq ($(feature-timerfd), 1)
+    msg := $(warning No timerfd support. Disables 'perf kvm stat live');
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_TIMERFD)
+  endif
 endif
 
 disable-python = $(eval $(disable-python_code))
@@ -603,18 +596,17 @@ ifdef CONFIG_LIBIBERTY_ONLY
   endif
 endif
 
-ifndef NO_BACKTRACE
-  ifeq ($(feature-backtrace), 1)
-    CFLAGS += -DHAVE_BACKTRACE_SUPPORT
+ifdef CONFIG_BACKTRACE
+  ifneq ($(feature-backtrace), 1)
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_BACKTRACE)
   endif
 endif
 
-ifndef NO_LIBNUMA
+ifdef CONFIG_LIBNUMA
   ifeq ($(feature-libnuma), 0)
     msg := $(warning No numa.h found, disables 'perf bench numa mem' benchmark, please install numactl-devel/libnuma-devel/libnuma-dev);
-    NO_LIBNUMA := 1
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBNUMA)
   else
-    CFLAGS += -DHAVE_LIBNUMA_SUPPORT
     EXTLIBS += -lnuma
   endif
 endif
@@ -797,9 +789,6 @@ all:
 	$(call store,NO_LIBPYTHON)
 	$(call store,NO_LIBELF)
 	$(call store,NO_LIBUNWIND)
-	$(call store,NO_BACKTRACE)
-	$(call store,NO_LIBNUMA)
-	$(call store,NO_LIBAUDIT)
 	$(call store,NO_LIBBIONIC)
 	$(call store,ETC_PERFCONFIG_SQ)
 	$(call store,DESTDIR_SQ)

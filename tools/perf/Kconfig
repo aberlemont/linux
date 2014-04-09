@@ -312,8 +312,8 @@ config LIBUNWIND_DIR
 	  Directory holding the libuwind dependency (headers +
 	  libraries).
 
-config NUMA
-	bool "Numa support (bench)"
+config LIBNUMA
+	bool "Libnuma support"
 	default y
         ---help---
 	  The library libnuma offers facilities to configure NUMA
@@ -326,6 +326,14 @@ config BIONIC
 	  The Bionic libc is a derivation of the BSD's standard C
 	  library code developed by Google for their Android operating
 	  system.
+
+config PERF_REGS
+	bool "Cache register accesses"
+	depends on (ARCH = "x86" || ARCH = "arm" || ARCH = "arm64")
+	default y
+        ---help---
+	  Cache register accesses for unwind processing to speed-up
+	  performances.
 
 endmenu
 

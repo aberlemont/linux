@@ -45,36 +45,4 @@ dummy := $(shell $(CONFIG) -d CONFIG_LIBUNWIND)
 endif
 endif
 
-# NO_BACKTRACE
-ifdef CONFIG_BACKTRACE
-ifdef NO_BACKTRACE
-dummy := $(info Disabling CONFIG_BACKTRACE)
-dummy := $(shell $(CONFIG) -d CONFIG_BACKTRACE)
-endif
-endif
-
-# NO_LIBNUMA
-ifdef CONFIG_NUMA
-ifdef NO_LIBNUMA
-dummy := $(info Disabling CONFIG_NUMA)
-dummy := $(shell $(CONFIG) -d CONFIG_NUMA)
-endif
-endif
-
-# NO_LIBAUDIT
-ifdef CONFIG_LIBAUDIT
-ifdef NO_LIBAUDIT
-dummy := $(info Disabling CONFIG_LIBAUDIT)
-dummy := $(shell $(CONFIG) -d CONFIG_LIBAUDIT)
-endif
-endif
-
-# NO_LIBBIONIC
-ifdef CONFIG_BIONIC
-ifdef NO_LIBBIONIC
-dummy := $(info Disabling CONFIG_BIONIC)
-dummy := $(shell $(CONFIG) -d CONFIG_BIONIC)
-endif
-endif
-
 all:
