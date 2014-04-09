@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 #include <pthread.h>
+#include "generated/autoconf.h"
 #include "callchain.h"
 #include "evsel.h"
 #include "header.h"
@@ -298,7 +299,7 @@ struct hist_browser_timer {
 	int refresh;
 };
 
-#ifdef HAVE_SLANG_SUPPORT
+#ifdef CONFIG_LIBSLANG
 #include "../ui/keysyms.h"
 int hist_entry__tui_annotate(struct hist_entry *he, struct perf_evsel *evsel,
 			     struct hist_browser_timer *hbt);

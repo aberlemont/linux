@@ -445,32 +445,26 @@ ifndef NO_LIBAUDIT
   endif
 endif
 
-ifdef NO_NEWT
-  NO_SLANG=1
-endif
-
-ifndef NO_SLANG
+ifdef CONFIG_LIBSLANG
   ifneq ($(feature-libslang), 1)
-    msg := $(warning slang not found, disables TUI support. Please install slang-devel or libslang-dev);
-    NO_SLANG := 1
+    msg := $(warning slang not found, disables SLANG and TUI supports. Please install slang-devel or libslang-dev);
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBSLANG)
   else
     # Fedora has /usr/include/slang/slang.h, but ubuntu /usr/include/slang.h
     CFLAGS += -I/usr/include/slang
-    CFLAGS += -DHAVE_SLANG_SUPPORT
     EXTLIBS += -lslang
   endif
 endif
 
-ifndef NO_GTK2
+ifdef CONFIG_LIBGTK2
   FLAGS_GTK2=$(CFLAGS) $(LDFLAGS) $(EXTLIBS) $(shell $(PKG_CONFIG) --libs --cflags gtk+-2.0 2>/dev/null)
   ifneq ($(feature-gtk2), 1)
     msg := $(warning GTK2 not found, disables GTK2 support. Please install gtk2-devel or libgtk2.0-dev);
-    NO_GTK2 := 1
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBGTK2)
   else
     ifeq ($(feature-gtk2-infobar), 1)
-      GTK_CFLAGS := -DHAVE_GTK_INFO_BAR_SUPPORT
+      $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBGTK2_INFOBAR)
     endif
-    CFLAGS += -DHAVE_GTK2_SUPPORT
     GTK_CFLAGS += $(shell $(PKG_CONFIG) --cflags gtk+-2.0 2>/dev/null)
     GTK_LIBS := $(shell $(PKG_CONFIG) --libs gtk+-2.0 2>/dev/null)
     EXTLIBS += -ldl
@@ -801,8 +795,6 @@ all:
 	$(call store,NO_LIBUNWIND)
 	$(call store,NO_LIBPERL)
 	$(call store,NO_LIBPYTHON)
-	$(call store,NO_NEWT)
-	$(call store,NO_GTK2)
 	$(call store,NO_DEMANGLE)
 	$(call store,NO_LIBELF)
 	$(call store,NO_LIBUNWIND)
