@@ -16,19 +16,3 @@ endif
 ifndef CONFIG_LIBUNWIND
 NO_LIBUNWIND := 1
 endif
-
-ifndef CONFIG_BACKTRACE
-NO_BACKTRACE := 1
-endif
-
-ifndef CONFIG_NUMA
-export NO_LIBNUMA := 1
-endif
-
-ifndef CONFIG_LIBAUDIT
-NO_LIBAUDIT := 1
-endif
-
-ifdef CONFIG_BIONIC
-NO_LIBBIONIC := 1
-endif

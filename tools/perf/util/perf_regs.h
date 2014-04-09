@@ -1,11 +1,13 @@
 #ifndef __PERF_REGS_H
 #define __PERF_REGS_H
 
+#include <linux/compiler.h>
 #include <linux/types.h>
+#include "generated/autoconf.h"
 
 struct regs_dump;
 
-#ifdef HAVE_PERF_REGS_SUPPORT
+#ifdef CONFIG_PERF_REGS
 #include <perf_regs.h>
 
 int perf_reg_value(u64 *valp, struct regs_dump *regs, int id);
@@ -25,5 +27,5 @@ static inline int perf_reg_value(u64 *valp __maybe_unused,
 {
 	return 0;
 }
-#endif /* HAVE_PERF_REGS_SUPPORT */
+#endif /* CONFIG_PERF_REGS */
 #endif /* __PERF_REGS_H */

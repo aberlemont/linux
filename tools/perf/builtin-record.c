@@ -5,6 +5,8 @@
  * (or a CPU, or a PID) into the perf.data output file - for
  * later analysis via perf report.
  */
+
+#include "generated/autoconf.h"
 #include "builtin.h"
 
 #include "perf.h"

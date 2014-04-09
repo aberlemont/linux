@@ -1,2 +1,2 @@
-obj-y += regs_load.o
+obj-$(CONFIG_PERF_REGS) += regs_load.o
 obj-y += dwarf-unwind.o
