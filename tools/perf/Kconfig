@@ -171,6 +171,7 @@ config STDIO
 
 config TUI
 	bool "Tui (slang based)"
+	depends on LIBSLANG
 	default y
         ---help---
 	  Text-based user interface which provides windowing
@@ -179,6 +180,7 @@ config TUI
 config GTK2
 	bool "Gtk2"
 	default y
+	depends on LIBGTK2
         ---help---
 	  Elaborate display mode based on libgtk2.
 
@@ -186,11 +188,30 @@ endmenu
 
 menu "Libraries / Dependencies"
 
+config LIBSLANG
+	bool "Slang (libslang)"
+	default y
+        ---help---
+	  libslang
+
 config LIBAUDIT
 	bool "Audit (libaudit)"
 	default y
         ---help---
 	  Linux audit framework dependency.
+
+config LIBGTK2
+	bool "Gtk2 (libgtk2)"
+	default y
+        ---help---
+	  libgtk2
+
+config LIBGTK2_INFOBAR
+	bool "Gtk2 infobar (libgtk2)"
+	depends on LIBGTK2
+	default y
+        ---help---
+	  libgtk2-infobar
 
 config LIBPERL
 	bool "Perl"

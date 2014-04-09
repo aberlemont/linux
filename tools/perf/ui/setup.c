@@ -1,6 +1,8 @@
 #include <pthread.h>
 #include <dlfcn.h>
 
+#include "generated/autoconf.h"
+
 #include "../util/cache.h"
 #include "../util/debug.h"
 #include "../util/hist.h"
@@ -8,7 +10,7 @@
 pthread_mutex_t ui__lock = PTHREAD_MUTEX_INITIALIZER;
 void *perf_gtk_handle;
 
-#ifdef HAVE_GTK2_SUPPORT
+#ifdef CONFIG_GTK2
 static int setup_gtk_browser(void)
 {
 	int (*perf_ui_init)(void);

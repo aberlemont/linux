@@ -19,30 +19,6 @@ dummy := $(shell $(CONFIG) -d CONFIG_LIBPYTHON)
 endif
 endif
 
-# NO_NEWT
-ifdef CONFIG_TUI
-ifdef NO_NEWT
-dummy := $(info Disabling CONFIG_TUI)
-dummy := $(shell $(CONFIG) -d CONFIG_TUI)
-endif
-endif
-
-# NO_NEWT
-ifdef CONFIG_TUI
-ifdef NO_SLANG
-dummy := $(info Disabling CONFIG_TUI)
-dummy := $(shell $(CONFIG) -d CONFIG_TUI)
-endif
-endif
-
-# NO_GTK2
-ifdef CONFIG_GTK2
-ifdef NO_GTK2
-dummy := $(info Disabling CONFIG_GTK2)
-dummy := $(shell $(CONFIG) -d CONFIG_GTK2)
-endif
-endif
-
 # NO_DEMANGLE
 ifdef CONFIG_DEMANGLE
 ifdef NO_DEMANGLE
