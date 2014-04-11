@@ -1,3 +1,5 @@
+#include "generated/autoconf.h"
+
 #include "builtin.h"
 
 #include "perf.h"
@@ -1372,11 +1374,11 @@ int find_scripts(char **scripts_array, char **scripts_path_array)
 	for_each_lang(scripts_path, scripts_dir, lang_dirent, lang_next) {
 		snprintf(lang_path, MAXPATHLEN, "%s/%s", scripts_path,
 			 lang_dirent.d_name);
-#ifdef NO_LIBPERL
+#ifndef CONFIG_LIBPERL
 		if (strstr(lang_path, "perl"))
 			continue;
 #endif
-#ifdef NO_LIBPYTHON
+#ifndef CONFIG_LIBPYTHON
 		if (strstr(lang_path, "python"))
 			continue;
 #endif

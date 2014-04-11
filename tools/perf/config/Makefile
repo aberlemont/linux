@@ -101,7 +101,7 @@ ifdef PARSER_DEBUG
   CFLAGS             += -DPARSER_DEBUG
 endif
 
-ifndef NO_LIBPYTHON
+ifdef CONFIG_LIBPYTHON
   # Try different combinations to accommodate systems that only have
   # python[2][-config] in weird combinations but always preferring
   # python2 and python2-config as per pep-0394. If we catch a
@@ -460,9 +460,7 @@ endif
 grep-libs  = $(filter -l%,$(1))
 strip-libs = $(filter-out -l%,$(1))
 
-ifdef NO_LIBPERL
-  CFLAGS += -DNO_LIBPERL
-else
+ifdef CONFIG_LIBPERL
   PERL_EMBED_LDOPTS = $(shell perl -MExtUtils::Embed -e ldopts 2>/dev/null)
   PERL_EMBED_LDFLAGS = $(call strip-libs,$(PERL_EMBED_LDOPTS))
   PERL_EMBED_LIBADD = $(call grep-libs,$(PERL_EMBED_LDOPTS))
@@ -470,9 +468,8 @@ else
   FLAGS_PERL_EMBED=$(PERL_EMBED_CCOPTS) $(PERL_EMBED_LDOPTS)
 
   ifneq ($(feature-libperl), 1)
-    CFLAGS += -DNO_LIBPERL
-    NO_LIBPERL := 1
     msg := $(warning Missing perl devel files. Disabling perl scripting support, consider installing perl-ExtUtils-Embed);
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBPERL)
   else
     LDFLAGS += $(PERL_EMBED_LDFLAGS)
     EXTLIBS += $(PERL_EMBED_LIBADD)
@@ -486,17 +483,14 @@ ifdef CONFIG_TIMERFD
   endif
 endif
 
-disable-python = $(eval $(disable-python_code))
-define disable-python_code
-  CFLAGS += -DNO_LIBPYTHON
-  $(if $(1),$(warning No $(1) was found))
-  $(warning Python support will not be built)
-  NO_LIBPYTHON := 1
-endef
+ifdef CONFIG_LIBPYTHON
 
-ifdef NO_LIBPYTHON
-  $(call disable-python)
-else
+  disable-python = $(eval $(disable-python_code))
+  define disable-python_code
+    $(if $(1),$(warning No $(1) was found))
+    $(warning Python support will not be built)
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBPYTHON)
+  endef
 
   ifndef PYTHON
     $(call disable-python,python interpreter)
@@ -520,18 +514,7 @@ else
       else
 
         ifneq ($(feature-libpython-version), 1)
-          $(warning Python 3 is not yet supported; please set)
-          $(warning PYTHON and/or PYTHON_CONFIG appropriately.)
-          $(warning If you also have Python 2 installed, then)
-          $(warning try something like:)
-          $(warning $(and ,))
-          $(warning $(and ,)  make PYTHON=python2)
-          $(warning $(and ,))
-          $(warning Otherwise, disable Python support entirely:)
-          $(warning $(and ,))
-          $(warning $(and ,)  make NO_LIBPYTHON=1)
-          $(warning $(and ,))
-          $(error   $(and ,))
+          $(call disable-python,python2 interpreter)
         else
           LDFLAGS += $(PYTHON_EMBED_LDFLAGS)
           EXTLIBS += $(PYTHON_EMBED_LIBADD)
@@ -781,8 +764,6 @@ all:
 	$(call store,PYTHON_EMBED_CCOPTS)
 	$(call store,PERL_EMBED_CCOPTS)
 	$(call store,NO_LIBUNWIND)
-	$(call store,NO_LIBPERL)
-	$(call store,NO_LIBPYTHON)
 	$(call store,ETC_PERFCONFIG_SQ)
 	$(call store,DESTDIR_SQ)
 	$(call store,bindir_SQ)
