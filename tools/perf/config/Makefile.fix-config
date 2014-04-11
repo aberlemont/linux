@@ -3,20 +3,4 @@ include $(KCONFIG_CONFIG)
 
 CONFIG := $(srctree)/scripts/config --file $(KCONFIG_CONFIG)
 
-# NO_LIBPERL
-ifdef CONFIG_LIBPERL
-ifdef NO_LIBPERL
-dummy := $(info Disabling CONFIG_LIBPERL)
-dummy := $(shell $(CONFIG) -d CONFIG_LIBPERL)
-endif
-endif
-
-# NO_LIBPYTHON
-ifdef CONFIG_LIBPYTHON
-ifdef NO_LIBPYTHON
-dummy := $(info Disabling CONFIG_LIBPYTHON)
-dummy := $(shell $(CONFIG) -d CONFIG_LIBPYTHON)
-endif
-endif
-
 all:

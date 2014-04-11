@@ -24,6 +24,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "generated/autoconf.h"
 #include "../perf.h"
 #include "util.h"
 #include "trace-event.h"
@@ -99,7 +100,7 @@ static void register_python_scripting(struct scripting_ops *scripting_ops)
 	scripting_context = malloc(sizeof(struct scripting_context));
 }
 
-#ifdef NO_LIBPYTHON
+#ifndef CONFIG_LIBPYTHON
 void setup_python_scripting(void)
 {
 	register_python_scripting(&python_scripting_unsupported_ops);
@@ -163,16 +164,16 @@ static void register_perl_scripting(struct scripting_ops *scripting_ops)
 	scripting_context = malloc(sizeof(struct scripting_context));
 }
 
-#ifdef NO_LIBPERL
-void setup_perl_scripting(void)
-{
-	register_perl_scripting(&perl_scripting_unsupported_ops);
-}
-#else
+#ifdef CONFIG_LIBPERL
 extern struct scripting_ops perl_scripting_ops;
 
 void setup_perl_scripting(void)
 {
 	register_perl_scripting(&perl_scripting_ops);
+}
+#else
+void setup_perl_scripting(void)
+{
+	register_perl_scripting(&perl_scripting_unsupported_ops);
 }
 #endif

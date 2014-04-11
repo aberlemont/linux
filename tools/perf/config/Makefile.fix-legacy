@@ -1,10 +1,2 @@
 
 include $(KCONFIG_CONFIG)
-
-ifndef CONFIG_LIBPERL
-NO_LIBPERL := 1
-endif
-
-ifndef CONFIG_LIBPYTHON
-NO_LIBPYTHON := 1
-endif
