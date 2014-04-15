@@ -575,33 +575,36 @@ ifeq ($(feature-libbfd), 1)
   endif
 endif
 
-ifdef NO_DEMANGLE
-  CFLAGS += -DNO_DEMANGLE
-else
-  ifdef HAVE_CPLUS_DEMANGLE_SUPPORT
-    EXTLIBS += -liberty
-    CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
-  else
-    ifneq ($(feature-libbfd), 1)
-      ifneq ($(feature-liberty), 1)
-        ifneq ($(feature-liberty-z), 1)
-          # we dont have neither HAVE_CPLUS_DEMANGLE_SUPPORT
-          # or any of 'bfd iberty z' trinity
-          ifeq ($(feature-cplus-demangle), 1)
-            EXTLIBS += -liberty
-            CFLAGS += -DHAVE_CPLUS_DEMANGLE_SUPPORT
-          else
-            msg := $(warning No bfd.h/libbfd found, install binutils-dev[el]/zlib-static to gain symbol demangling)
-            CFLAGS += -DNO_DEMANGLE
-          endif
+ifdef CONFIG_LIBBFD
+  ifneq ($(feature-libbfd), 1)
+    # TODO: there might be an issue here: feature-liberty and
+    # feature-liberty-z cannot be set; they can be set only if
+    # feature-libbfd is set
+    ifneq ($(feature-liberty), 1)
+      ifneq ($(feature-liberty-z), 1)
+        # we dont have neither HAVE_CPLUS_DEMANGLE_SUPPORT
+        # or any of 'bfd iberty z' trinity
+        ifeq ($(feature-cplus-demangle), 1)
+          EXTLIBS += -liberty
+          $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBBFD)
+          $(shell $(KCONFIG_SCRIPT) -e CONFIG_LIBIBERTY_ONLY)
+        else
+          msg := $(warning No bfd.h/libbfd found, install binutils-dev[el]/zlib-static to gain symbol demangling)
+          $(shell $(KCONFIG_SCRIPT) -d CONFIG_DEMANGLE)
         endif
       endif
     endif
   endif
 endif
 
-ifneq ($(filter -lbfd,$(EXTLIBS)),)
-  CFLAGS += -DHAVE_LIBBFD_SUPPORT
+ifdef CONFIG_LIBIBERTY_ONLY
+  $(call feature_check,cplus-demangle)
+  ifeq ($(feature-cplus-demangle), 1)
+    EXTLIBS += -liberty
+  else
+    msg := $(warning No libiberty found, install binutils-dev[el]/zlib-static to gain symbol demangling)
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_DEMANGLE)
+  endif
 endif
 
 ifndef NO_BACKTRACE
@@ -822,7 +825,6 @@ all:
 	$(call store,NO_LIBUNWIND)
 	$(call store,NO_LIBPERL)
 	$(call store,NO_LIBPYTHON)
-	$(call store,NO_DEMANGLE)
 	$(call store,NO_LIBELF)
 	$(call store,NO_LIBUNWIND)
 	$(call store,NO_BACKTRACE)

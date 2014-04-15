@@ -225,6 +225,35 @@ config LIBPYTHON
         ---help---
 	  Libpython dependency needed by the perf script feature.
 
+config TIMERFD
+	bool "Timer via file descriptor"
+	default y
+        ---help---
+	  Timer via file descriptor
+
+config DEMANGLE
+	bool "Demangle symbols"
+	default y
+        ---help---
+	  Enable demangling so as to display human-readable
+	  symbols. This option is convenient with C++ programs.
+
+choice DEMANGLE_DEPS
+       prompt "Demangle dependency(ies)"
+       depends on DEMANGLE
+       default LIBBFD
+
+config LIBBFD
+	bool "BFD + libiberty libraries"
+        ---help---
+	  Binary File Descriptor and libiberty libraries
+
+config LIBIBERTY_ONLY
+	bool "Libiberty only"
+        ---help---
+	  Libiberty
+endchoice
+
 choice
 	prompt "Elf library"
 	default LIBELF
@@ -265,13 +294,6 @@ config NUMA
         ---help---
 	  The library libnuma offers facilities to configure NUMA
 	  policies supported by the linux kernel.
-
-config DEMANGLE
-	bool "Demangle symbols"
-	default y
-        ---help---
-	  Enable demangling so as to display human-readable
-	  symbols. This option is convenient with C++ programs.
 
 config BIONIC
 	bool "Bionic support"

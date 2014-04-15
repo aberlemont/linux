@@ -1,6 +1,8 @@
 #ifndef __PERF_SYMBOL
 #define __PERF_SYMBOL 1
 
+#include "generated/autoconf.h"
+
 #include <linux/types.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -23,26 +25,33 @@
 
 #include "dso.h"
 
-#ifdef HAVE_CPLUS_DEMANGLE_SUPPORT
+#ifdef CONFIG_DEMANGLE
+
+#ifdef CONFIG_LIBBFD
+
+#define PACKAGE 'perf'
+#include <bfd.h>
+
+#elif defined(CONFIG_LIBIBERTY_ONLY)
 extern char *cplus_demangle(const char *, int);
 
 static inline char *bfd_demangle(void __maybe_unused *v, const char *c, int i)
 {
 	return cplus_demangle(c, i);
 }
-#else
-#ifdef NO_DEMANGLE
+
+#else /* Unknown dependency */
+#error "Inconsistent demangling configuration"
+#endif
+
+#else /* !CONFIG_DEMANGLE */
 static inline char *bfd_demangle(void __maybe_unused *v,
 				 const char __maybe_unused *c,
 				 int __maybe_unused i)
 {
 	return NULL;
 }
-#else
-#define PACKAGE 'perf'
-#include <bfd.h>
-#endif
-#endif
+#endif /* CONFIG_DEMANGLE */
 
 /*
  * libelf 0.8.x and earlier do not support ELF_C_READ_MMAP;

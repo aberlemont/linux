@@ -4,11 +4,13 @@
 
 #include <linux/kernel.h>
 
+#include "generated/autoconf.h"
+
 #include "util/dso.h"
 #include "util/util.h"
 #include "util/debug.h"
 
-#ifdef HAVE_LIBBFD_SUPPORT
+#ifdef CONFIG_LIBBFD
 
 /*
  * Implement addr2line using libbfd.
@@ -189,7 +191,7 @@ void dso__free_a2l(struct dso *dso)
 	dso->a2l = NULL;
 }
 
-#else /* HAVE_LIBBFD_SUPPORT */
+#else /* !CONFIG_LIBBFD */
 
 static int addr2line(const char *dso_name, unsigned long addr,
 		     char **file, unsigned int *line_nr,
@@ -242,7 +244,7 @@ void dso__free_a2l(struct dso *dso __maybe_unused)
 {
 }
 
-#endif /* HAVE_LIBBFD_SUPPORT */
+#endif /* CONFIG_LIBBFD */
 
 /*
  * Number of addr2line failures (without success) before disabling it for that
