@@ -19,24 +19,6 @@ dummy := $(shell $(CONFIG) -d CONFIG_LIBPYTHON)
 endif
 endif
 
-# NO_DEMANGLE
-ifdef CONFIG_DEMANGLE
-ifdef NO_DEMANGLE
-dummy := $(info Disabling CONFIG_DEMANGLE)
-dummy := $(shell $(CONFIG) -d CONFIG_DEMANGLE)
-endif
-endif
-
-# NO_LIBELF
-ifdef CONFIG_LIBELF
-ifdef NO_LIBELF
-dummy := $(info Disabling CONFIG_LIBELF)
-dummy := $(info Enabling  CONFIG_LIBELF_MINIMAL)
-dummy := $(shell $(CONFIG) -d CONFIG_LIBELF)
-dummy := $(shell $(CONFIG) -e CONFIG_LIBELF_MINIMAL)
-endif
-endif
-
 # NO_LIBUNWIND
 ifdef CONFIG_LIBUNWIND
 ifdef NO_LIBUNWIND

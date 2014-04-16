@@ -256,6 +256,7 @@ config TIMERFD
 	  Timer via file descriptor
 
 config DEMANGLE
+       depends on LIBELF
 	bool "Demangle symbols"
 	default y
         ---help---
@@ -298,7 +299,29 @@ choice
 	  Builtin elf support.
 endchoice
 
+config LIBELF_MMAP
+        depends on LIBELF
+	bool "Libelf mmap support"
+	default y
+        ---help---
+	  libdelf mmap
+
+config LIBELF_GETPHDRNUM
+        depends on LIBELF
+	default y
+	bool "Libelf getphdrnum support"
+        ---help---
+	  libdelf mmap
+
+config LIBDWARF
+	depends on LIBELF
+	bool "Dwarf (libdwarf)"
+	default y
+        ---help---
+	  libdwarf
+
 config LIBUNWIND
+        depends on LIBELF
 	bool "User space libunwind callchains"
 	default y
         ---help---

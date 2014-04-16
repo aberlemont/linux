@@ -303,12 +303,7 @@ ifdef CONFIG_BIONIC
   endif
 endif
 
-ifdef NO_LIBELF
-  NO_DWARF := 1
-  NO_DEMANGLE := 1
-  NO_LIBUNWIND := 1
-  NO_LIBDW_DWARF_UNWIND := 1
-else
+ifdef CONFIG_LIBELF
   ifeq ($(feature-libelf), 0)
     ifeq ($(feature-glibc), 1)
       LIBC_SUPPORT := 1
@@ -318,12 +313,9 @@ else
     endif
     ifeq ($(LIBC_SUPPORT),1)
       msg := $(warning No libelf found, disables 'probe' tool, please install elfutils-libelf-devel/libelf-dev);
-
-      NO_LIBELF := 1
-      NO_DWARF := 1
-      NO_DEMANGLE := 1
-      NO_LIBUNWIND := 1
-      NO_LIBDW_DWARF_UNWIND := 1
+      $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBELF)
+      $(shell $(KCONFIG_SCRIPT) -e CONFIG_LIBELF_MINIMAL)
+      EXTLIBS := $(filter-out -lelf,$(EXTLIBS))
     else
       ifneq ($(filter s% -static%,$(LDFLAGS),),)
         msg := $(error No static glibc found, please install glibc-static);
@@ -332,6 +324,7 @@ else
       endif
     endif
   else
+    LIBELF = 1
     ifndef NO_LIBDW_DWARF_UNWIND
       ifneq ($(feature-libdw-dwarf-unwind),1)
         NO_LIBDW_DWARF_UNWIND := 1
@@ -343,17 +336,20 @@ else
       NO_DWARF := 1
     endif # Dwarf support
   endif # libelf support
-endif # NO_LIBELF
+endif # CONFIG_LIBELF
 
-ifndef NO_LIBELF
-  CFLAGS += -DHAVE_LIBELF_SUPPORT
+ifeq ($(LIBELF), 1)
 
-  ifeq ($(feature-libelf-mmap), 1)
-    CFLAGS += -DHAVE_LIBELF_MMAP_SUPPORT
+  ifdef CONFIG_LIBELF_MMAP
+    ifneq ($(feature-libelf-mmap), 1)
+      $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBELF_MMAP)
+    endif
   endif
 
-  ifeq ($(feature-libelf-getphdrnum), 1)
-    CFLAGS += -DHAVE_ELF_GETPHDRNUM_SUPPORT
+  ifdef CONFIG_LIBELF_MMAP
+    ifneq ($(feature-libelf-getphdrnum), 1)
+      $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBELF_MMAP)
+    endif
   endif
 
   # include ARCH specific config
@@ -369,7 +365,7 @@ ifndef NO_LIBELF
       EXTLIBS += -lelf -ldw
     endif # PERF_HAVE_DWARF_REGS
   endif # NO_DWARF
-endif # NO_LIBELF
+endif # LIBELF
 
 ifeq ($(ARCH),powerpc)
   ifndef NO_DWARF
@@ -787,7 +783,6 @@ all:
 	$(call store,NO_LIBUNWIND)
 	$(call store,NO_LIBPERL)
 	$(call store,NO_LIBPYTHON)
-	$(call store,NO_LIBELF)
 	$(call store,NO_LIBUNWIND)
 	$(call store,NO_LIBBIONIC)
 	$(call store,ETC_PERFCONFIG_SQ)

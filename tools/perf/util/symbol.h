@@ -17,7 +17,7 @@
 #include "event.h"
 #include "util.h"
 
-#ifdef HAVE_LIBELF_SUPPORT
+#ifdef CONFIG_LIBELF
 #include <libelf.h>
 #include <gelf.h>
 #endif
@@ -57,13 +57,13 @@ static inline char *bfd_demangle(void __maybe_unused *v,
  * libelf 0.8.x and earlier do not support ELF_C_READ_MMAP;
  * for newer versions we can use mmap to reduce memory usage:
  */
-#ifdef HAVE_LIBELF_MMAP_SUPPORT
+#ifdef CONFIG_LIBELF_MMAP
 # define PERF_ELF_C_READ_MMAP ELF_C_READ_MMAP
 #else
 # define PERF_ELF_C_READ_MMAP ELF_C_READ
 #endif
 
-#ifdef HAVE_LIBELF_SUPPORT
+#ifdef CONFIG_LIBELF
 extern Elf_Scn *elf_section_by_name(Elf *elf, GElf_Ehdr *ep,
 				GElf_Shdr *shp, const char *name, size_t *idx);
 #endif
@@ -220,7 +220,7 @@ struct symsrc {
 	int fd;
 	enum dso_binary_type type;
 
-#ifdef HAVE_LIBELF_SUPPORT
+#ifdef CONFIG_LIBELF
 	Elf *elf;
 	GElf_Ehdr ehdr;
 
