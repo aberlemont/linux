@@ -30,7 +30,7 @@ do
      echo "#endif"
 done
 
-echo "#ifdef HAVE_LIBELF_SUPPORT"
+echo "#ifdef CONFIG_LIBELF"
 sed -n -e 's/^perf-\([^ 	]*\)[ 	].* full.*/\1/p' $1/command-list.txt |
 sort |
 while read cmd
@@ -45,5 +45,5 @@ do
      }' "$1/Documentation/perf-$cmd.txt"
      echo "#endif"
 done
-echo "#endif /* HAVE_LIBELF_SUPPORT */"
+echo "#endif /* CONFIG_LIBELF */"
 echo "};"

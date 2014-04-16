@@ -81,7 +81,7 @@ static struct cmd_struct commands[] = {
 #ifdef CONFIG_BUILTIN_SCHED
 	{ "sched",	cmd_sched,	0 },
 #endif
-#if defined HAVE_LIBELF_SUPPORT && defined CONFIG_BUILTIN_PROBE
+#if defined CONFIG_LIBELF && defined CONFIG_BUILTIN_PROBE
 	{ "probe",	cmd_probe,	0 },
 #endif
 #ifdef CONFIG_BUILTIN_KMEM
