@@ -1,1 +1,1 @@
-obj-y += dwarf-regs.o
+obj-$(CONFIG_LIBDWARF) += dwarf-regs.o

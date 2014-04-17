@@ -287,7 +287,6 @@ choice
 	  these tasks, perf can rely on either the libelf library or a
 	  minimal builtin support.
 
-
 	config LIBELF
 	bool "elf"
 	---help---
@@ -318,15 +317,51 @@ config LIBDWARF
 	bool "Dwarf (libdwarf)"
 	default y
         ---help---
-	  libdwarf
+	  A library for parsing DWARF debug information.
 
-config LIBUNWIND
-        depends on LIBELF
-	bool "User space libunwind callchains"
+config LIBDWARF_DIR
+	string "libdwarf directory"
+	depends on LIBDWARF
+        ---help---
+	  Directory holding the libdwarf dependency (headers +
+	  libraries)
+
+config UNWIND
+        depends on (LIBELF && PERF_REGS)
+	bool "User space unwind callchains"
 	default y
         ---help---
-	  The library libunwind provides a portable C API to determine
-	  the call-chain of a program.
+	  Enable call-chain unwinding of user-space application.
+
+choice UNWIND_DEPS
+       prompt "Unwind dependency"
+       depends on UNWIND
+       default LIBUNWIND
+
+config LIBUNWIND
+        depends on (LIBELF && PERF_REGS)
+	bool "Libunwind"
+        ---help---
+	  Rely on libunwind post unwind support to determine the
+	  call-chain of a user-space program. The library libunwind
+	  supports all the architectures.
+
+config LIBDWARF_UNWIND
+        depends on (LIBDWARF && PERF_REGS && (ARCH = "x86" || ARCH = "arm"))
+	bool "Libdwarf unwind"
+        ---help---
+	  Rely on lidw DWARF post unwind support to determine the
+	  call-chain of a user-space program. So far there's only x86
+	  and arm libdw unwind support merged in perf.
+
+endchoice
+
+config LIBUNWIND_DEBUG_FRAME
+        depends on LIBUNWIND
+	bool "libunwind debug frame"
+	default y
+        ---help---
+	  libunwind debug frame
 
 config LIBUNWIND_DIR
 	string "libunwind directory"
@@ -334,6 +369,18 @@ config LIBUNWIND_DIR
         ---help---
 	  Directory holding the libuwind dependency (headers +
 	  libraries).
+
+config SKIP_CALLCHAIN_IDX
+	depends on (LIBDWARF && ARCH = "powerpc")
+	bool "Skip unnecessary callchain entries thanks to Dwarf"
+	default y
+        ---help---
+	  When saving the callchain on Power, the kernel
+	  conservatively saves excess entries in the callchain. A few
+	  of these entries are needed in some cases but not others. If
+	  the unnecessary entries are not ignored, we end up with
+	  duplicate arcs in the call-graphs. Use DWARF debug
+	  information to skip over any unnecessary callchain entries.
 
 config LIBNUMA
 	bool "Libnuma support"

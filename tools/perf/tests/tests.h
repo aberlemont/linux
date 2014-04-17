@@ -1,6 +1,8 @@
 #ifndef TESTS_H
 #define TESTS_H
 
+#include "generated/autoconf.h"
+
 #define TEST_ASSERT_VAL(text, cond)					 \
 do {									 \
 	if (!(cond)) {							 \
@@ -52,12 +54,10 @@ int test__switch_tracking(void);
 int test__fdarray__filter(void);
 int test__fdarray__add(void);
 
-#if defined(__x86_64__) || defined(__i386__) || defined(__arm__)
-#ifdef HAVE_DWARF_UNWIND_SUPPORT
+#ifdef CONFIG_LIBDWARF_UNWIND
 struct thread;
 struct perf_sample;
 int test__arch_unwind_sample(struct perf_sample *sample,
 			     struct thread *thread);
-#endif
 #endif
 #endif /* TESTS_H */

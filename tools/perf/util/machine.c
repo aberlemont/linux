@@ -1,3 +1,4 @@
+#include "generated/autoconf.h"
 #include "callchain.h"
 #include "debug.h"
 #include "event.h"
@@ -1402,7 +1403,7 @@ static int thread__resolve_callchain_sample(struct thread *thread,
 		else
 			j = chain->nr - i - 1;
 
-#ifdef HAVE_SKIP_CALLCHAIN_IDX
+#ifdef CONFIG_SKIP_CALLCHAIN_IDX
 		if (j == skip_idx)
 			continue;
 #endif

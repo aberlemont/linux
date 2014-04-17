@@ -17,6 +17,7 @@
 
 #include "asm/bug.h"
 
+#include "generated/autoconf.h"
 #include "hist.h"
 #include "util.h"
 #include "sort.h"
@@ -25,7 +26,7 @@
 
 __thread struct callchain_cursor callchain_cursor;
 
-#ifdef HAVE_DWARF_UNWIND_SUPPORT
+#ifdef CONFIG_LIBDWARF_UNWIND
 static int get_stack_size(const char *str, unsigned long *_size)
 {
 	char *endptr;
@@ -51,7 +52,7 @@ static int get_stack_size(const char *str, unsigned long *_size)
 	       max_size, str);
 	return -1;
 }
-#endif /* HAVE_DWARF_UNWIND_SUPPORT */
+#endif /* CONFIG_LIBDWARF_UNWIND */
 
 int parse_callchain_record_opt(const char *arg)
 {
@@ -80,7 +81,7 @@ int parse_callchain_record_opt(const char *arg)
 				       "needed for -g fp\n");
 			break;
 
-#ifdef HAVE_DWARF_UNWIND_SUPPORT
+#ifdef CONFIG_LIBDWARF_UNWIND
 		/* Dwarf style */
 		} else if (!strncmp(name, "dwarf", sizeof("dwarf"))) {
 			const unsigned long default_stack_dump_size = 8192;
@@ -96,7 +97,7 @@ int parse_callchain_record_opt(const char *arg)
 				ret = get_stack_size(tok, &size);
 				callchain_param.dump_size = size;
 			}
-#endif /* HAVE_DWARF_UNWIND_SUPPORT */
+#endif /* CONFIG_LIBDWARF_UNWIND */
 		} else {
 			pr_err("callchain: Unknown --call-graph option "
 			       "value: %s\n", arg);
@@ -208,7 +209,7 @@ int perf_callchain_config(const char *var, const char *value)
 
 	if (!strcmp(var, "record-mode"))
 		return parse_callchain_record_opt(value);
-#ifdef HAVE_DWARF_UNWIND_SUPPORT
+#ifdef CONFIG_LIBDWARF_UNWIND
 	if (!strcmp(var, "dump-size")) {
 		unsigned long size = 0;
 		int ret;
