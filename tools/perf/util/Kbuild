@@ -49,16 +49,19 @@ obj-y += string.o
 obj-y += strlist.o
 obj-y += svghelper.o
 obj-y += symbol.o
-obj-y += perf_regs.o
 obj-y += tsc.o
 obj-y += cloexec.o
 
-obj-$(CONFIG_LIBUNWIND) += unwind.o
+obj-$(CONFIG_PERF_REGS) += perf_regs.o
+
+obj-$(CONFIG_LIBUNWIND) += unwind-libunwind.o
+obj-$(CONFIG_LIBDWARF_UNWIND) += unwind-libdw.o
 
 obj-$(CONFIG_LIBELF) += symbol-elf.o
-obj-$(CONFIG_LIBELF) += dwarf-aux.o
 obj-$(CONFIG_LIBELF) += probe-event.o
-obj-$(CONFIG_LIBELF) += probe-finder.o
+
+obj-$(CONFIG_LIBDWARF) += dwarf-aux.o
+obj-$(CONFIG_LIBDWARF) += probe-finder.o
 
 obj-$(CONFIG_LIBELF_MINIMAL) += symbol-minimal.o
 

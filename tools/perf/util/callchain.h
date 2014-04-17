@@ -1,6 +1,7 @@
 #ifndef __PERF_CALLCHAIN_H
 #define __PERF_CALLCHAIN_H
 
+#include "generated/autoconf.h"
 #include "../perf.h"
 #include <linux/list.h>
 #include <linux/rbtree.h>
@@ -183,7 +184,7 @@ static inline void callchain_cursor_snapshot(struct callchain_cursor *dest,
 	dest->nr -= src->pos;
 }
 
-#ifdef HAVE_SKIP_CALLCHAIN_IDX
+#ifdef CONFIG_SKIP_CALLCHAIN_IDX
 extern int arch_skip_callchain_idx(struct machine *machine,
 			struct thread *thread, struct ip_callchain *chain);
 #else

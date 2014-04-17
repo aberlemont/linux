@@ -1,2 +1,2 @@
 obj-y += kvm-stat.o
-obj-y += dwarf-regs.o
+obj-$(CONFIG_LIBDWARF) += dwarf-regs.o

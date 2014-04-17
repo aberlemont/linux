@@ -31,6 +31,8 @@ obj-y += hists_cumulate.o
 obj-y += hists_common.o
 obj-y += hists_filter.o
 
+obj-$(LIBDWARF_UNWIND) += dwarf-unwind.o
+
 CFLAGS_python-use.o += -D"PYTHON=KBUILD_STR($(PYTHON_WORD))"
 CFLAGS_python-use.o += -D"PYTHONPATH=KBUILD_STR(python)"
 

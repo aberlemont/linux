@@ -2,6 +2,7 @@
 #define __UNWIND_H
 
 #include <linux/types.h>
+#include "generated/autoconf.h"
 #include "event.h"
 #include "symbol.h"
 #include "thread.h"
@@ -14,13 +15,13 @@ struct unwind_entry {
 
 typedef int (*unwind_entry_cb_t)(struct unwind_entry *entry, void *arg);
 
-#ifdef HAVE_DWARF_UNWIND_SUPPORT
+#ifdef CONFIG_UNWIND
 int unwind__get_entries(unwind_entry_cb_t cb, void *arg,
 			struct machine *machine,
 			struct thread *thread,
 			struct perf_sample *data, int max_stack);
 /* libunwind specific */
-#ifdef HAVE_LIBUNWIND_SUPPORT
+#ifdef CONFIG_LIBUNWIND
 int libunwind__arch_reg_id(int regnum);
 int unwind__prepare_access(struct thread *thread);
 void unwind__finish_access(struct thread *thread);
@@ -50,5 +51,5 @@ static inline int unwind__prepare_access(struct thread *thread __maybe_unused)
 }
 
 static inline void unwind__finish_access(struct thread *thread __maybe_unused) {}
-#endif /* HAVE_DWARF_UNWIND_SUPPORT */
+#endif /* CONFIG_UNWIND */
 #endif /* __UNWIND_H */
