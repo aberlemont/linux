@@ -3,11 +3,11 @@
  *
  * Builtin help command
  */
+#include "generated/autoconf.h"
 #include "perf.h"
 #include "util/cache.h"
 #include "builtin.h"
 #include "util/exec_cmd.h"
-#include "builtin-cmds.h"
 #include "common-cmds.h"
 #include "util/parse-options.h"
 #include "util/run-command.h"

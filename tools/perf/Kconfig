@@ -5,9 +5,9 @@ config TARGET_ARCH
 	string
 	option env="ARCH"
 
-config TARGET_IS_X86_64
+config TARGET_IS_64_BIT
        string
-       option env="IS_X86_64"
+       option env="IS_64_BIT"
 
 config TARGET_CROSS_COMPILE
 	string
@@ -19,7 +19,7 @@ config ARCH
 
 config X86_64
 	bool
-	default y if TARGET_ARCH = "x86" && TARGET_IS_X86_64 = "1"
+	default y if TARGET_ARCH = "x86" && TARGET_IS_64_BIT = "1"
 
 config CROSS_COMPILE
 	string
@@ -127,6 +127,13 @@ config BUILTIN_KVM
 		BUILTIN_TOP && BUILTIN_DIFF && BUILTIN_STAT
         ---help---
 	  Tool to trace/measure kvm guest os
+
+config BUILTIN_KVM_STAT
+	bool "kvm-stat"
+	default y
+	depends on BUILTIN_KVM && (ARCH = "x86" || ARCH = "s390")
+        ---help---
+	  Get performance counter statistics on a kvm guest os.
 
 config BUILTIN_LIST
 	bool "list"
@@ -404,6 +411,22 @@ config PERF_REGS
         ---help---
 	  Cache register accesses for unwind processing to speed-up
 	  performances.
+
+config READ_VDSO32
+	bool "Support 32-bit compatibility"
+	depends on TARGET_IS_64_BIT = "1"
+	default y
+        ---help---
+	  On 64-bits architecture, support 32-bit compatibility VDSOs
+
+config READ_VDSOX32
+	bool "Support x32 compatibility"
+	depends on X86_64
+	default y
+        ---help---
+	  On x86_64 architecture, support x32 compatibility VDSOs
+	  (code for x86_64 architecture but "long" and pointer types
+	  set to 32 bits)
 
 endmenu
 

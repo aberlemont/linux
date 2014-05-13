@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <linux/kernel.h>
 
+#include "generated/autoconf.h"
 #include "vdso.h"
 #include "util.h"
 #include "symbol.h"
@@ -256,11 +257,11 @@ static int vdso__dso_findnew_compat(struct machine *machine,
 
 	dso_type = machine__thread_dso_type(machine, thread);
 
-#ifndef HAVE_PERF_READ_VDSO32
+#ifndef CONFIG_READ_VDSO32
 	if (dso_type == DSO__TYPE_32BIT)
 		return 0;
 #endif
-#ifndef HAVE_PERF_READ_VDSOX32
+#ifndef CONFIG_READ_VDSOX32
 	if (dso_type == DSO__TYPE_X32BIT)
 		return 0;
 #endif

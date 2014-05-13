@@ -6,8 +6,8 @@
  * This is the main hub from which the sub-commands (perf stat,
  * perf top, perf record, perf report, etc.) are started.
  */
+#include "generated/autoconf.h"
 #include "builtin.h"
-#include "builtin-cmds.h"
 
 #include "util/exec_cmd.h"
 #include "util/cache.h"

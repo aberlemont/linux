@@ -34,10 +34,14 @@ ifeq ($(ARCH),arm64)
   LIBUNWIND_LIBS = -lunwind -lunwind-aarch64
 endif
 
+ifdef KCONFIG_CONFIG
+include $(KCONFIG_CONFIG)
+endif
+
 ifeq ($(LIBUNWIND_LIBS),)
   $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBUNWIND)
 else
-  LIBUNWIND = 1
+  config-libunwind = 1
   #
   # For linking with debug library, run like:
   #
@@ -63,10 +67,6 @@ ifdef CONFIG_LIBELF
   endif
   FEATURE_CHECK_CFLAGS-libdw-dwarf-unwind := $(LIBDW_CFLAGS)
   FEATURE_CHECK_LDFLAGS-libdw-dwarf-unwind := $(LIBDW_LDFLAGS) -ldw
-endif
-
-ifdef KCONFIG_CONFIG
-include $(src-perf)/config/Makefile.fix-legacy
 endif
 
 # include ARCH specific config
@@ -299,12 +299,12 @@ endif
 ifdef CONFIG_LIBELF
   ifeq ($(feature-libelf), 0)
     ifeq ($(feature-glibc), 1)
-      LIBC_SUPPORT := 1
+      config-libc := 1
     endif
     ifeq ($(BIONIC),1)
-      LIBC_SUPPORT := 1
+      config-libc := 1
     endif
-    ifeq ($(LIBC_SUPPORT),1)
+    ifeq ($(config-libc),1)
       msg := $(warning No libelf found, disables 'probe' tool, please install elfutils-libelf-devel/libelf-dev);
       $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBELF)
       $(shell $(KCONFIG_SCRIPT) -e CONFIG_LIBELF_MINIMAL)
@@ -317,27 +317,27 @@ ifdef CONFIG_LIBELF
       endif
     endif
   else
-    LIBELF = 1
+    config-libelf = 1
     ifdef CONFIG_LIBDWARF
       ifneq ($(feature-dwarf), 1)
         msg := $(warning No libdw.h found or old libdw.h found or elfutils is older than 0.138, disables dwarf support. Please install new elfutils-devel/libdw-dev);
         $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBDWARF)
       else
-        LIBDWARF = 1
+        config-libdwarf = 1
       endif # Dwarf support
       ifdef CONFIG_LIBDWARF_UNWIND
         ifneq ($(feature-libdw-dwarf-unwind),1)
           msg := $(warning No libdw DWARF unwind found, Please install elfutils-devel/libdw-dev >= 0.158 and/or set CONFIG_LIBDWARF_DIR);
           $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBDWARF_UNWIND)
         else
-          LIBDWARF_UNWIND = 1
+          config-libdwarf-unwind = 1
         endif # Dwarf unwind support detected
       endif # CONFIG_LIBDWARF_UNWIND
     endif  # CONFIG_LIBDWARF
   endif # libelf support
 endif # CONFIG_LIBELF
 
-ifeq ($(LIBELF), 1)
+ifeq ($(config-libelf), 1)
 
   ifdef CONFIG_LIBELF_MMAP
     ifneq ($(feature-libelf-mmap), 1)
@@ -345,16 +345,16 @@ ifeq ($(LIBELF), 1)
     endif
   endif
 
-  ifdef CONFIG_LIBELF_MMAP
+  ifdef CONFIG_LIBELF_GETPHDRNUM
     ifneq ($(feature-libelf-getphdrnum), 1)
-      $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBELF_MMAP)
+      $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBELF_GETPHDRNUM)
     endif
   endif
 
   # include ARCH specific config
   -include $(src-perf)/arch/$(ARCH)/Makefile
 
-  ifeq ($(LIBDWARF), 1)
+  ifeq ($(config-libdwarf), 1)
     CFLAGS += $(LIBDW_CFLAGS)
     LDFLAGS += $(LIBDW_LDFLAGS)
     EXTLIBS += -lelf -ldw
@@ -365,17 +365,17 @@ ifdef CONFIG_UNWIND
   # CONFIG_LIBUNWIND is the default choice; so, if it is not
   # available, let's try another one
   ifdef CONFIG_LIBUNWIND
-    ifeq ($(LIBUNWIND), 1)
+    ifeq ($(config-libunwind), 1)
       ifneq ($(feature-libunwind), 1)
-        LIBUNWIND = 0
+        config-libunwind = 0
         $(shell $(KCONFIG_SCRIPT) -d CONFIG_LIBUNWIND)
-        ifeq ($(LIBDWARF_UNWIND), 1)
+        ifeq ($(config-libdwarf-unwind), 1)
           msg := $(warning No libunwind found, post unwind will rely on libdwarf-unwind. Please install libunwind-dev[el] >= 1.1);
           $(shell $(KCONFIG_SCRIPT) -e CONFIG_LIBDWARF_UNWIND)
         else
           msg := $(warning No libunwind found, disabling post unwind support. Please install libunwind-dev[el] >= 1.1);
           $(shell $(KCONFIG_SCRIPT) -d CONFIG_UNWIND)
-        endif # LIBDWARF_UNWIND
+        endif # config-libdwarf-unwind
       else # feature-libunwind OK
         EXTLIBS += $(LIBUNWIND_LIBS)
         CFLAGS += $(LIBUNWIND_CFLAGS)
@@ -387,7 +387,7 @@ ifdef CONFIG_UNWIND
   # CONFIG_LIBDWARF_UNWIND is not the default choice (so the user's
   # choice); so, we disable CONFIG_UNWIND if it is not available
   ifdef CONFIG_LIBDWARF_UNWIND
-    ifneq ($(LIBDWARF_UNWIND), 1)
+    ifneq ($(config-libdwarf-unwind), 1)
       msg := $(warning Disabling post unwing because (libdwarf-unwind is not available));
       $(shell $(KCONFIG_SCRIPT) -d CONFIG_UNWIND)
     endif
@@ -395,7 +395,7 @@ ifdef CONFIG_UNWIND
 
   # if libunwind is OK, let's check the option DEBUG_FRAME
   ifdef CONFIG_LIBUNWIND
-    ifeq ($(LIBUNWIND), 1)
+    ifeq ($(config-libunwind), 1)
       ifeq ($(ARCH),$(filter $(ARCH),arm arm64))
         $(call feature_check,libunwind-debug-frame)
         ifneq ($(feature-libunwind-debug-frame), 1)
@@ -412,11 +412,11 @@ ifdef CONFIG_UNWIND
 dwarf-post-unwind = 0
 dwarf-post-unwind-text = BUG
 
-ifeq ($(LIBUNWIND), 1)
+ifeq ($(config-libunwind), 1)
   dwarf-post-unwind := 1
   dwarf-post-unwind-text := libunwind
 else
-  ifeq ($(LIBDWARF_UNWIND), 1)
+  ifeq ($(config-libdwarf-unwind), 1)
     dwarf-post-unwind := 1
     dwarf-post-unwind-text := libdw
   endif
@@ -592,33 +592,18 @@ ifdef CONFIG_LIBNUMA
   endif
 endif
 
-ifdef HAVE_KVM_STAT_SUPPORT
-    CFLAGS += -DHAVE_KVM_STAT_SUPPORT
+ifdef CONFIG_READ_VDSO32
+  $(call feature_check,compile-32)
+  ifeq ($(feature-compile-32), 0)
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_READ_VDSO32)
+  endif
 endif
 
-ifeq (${IS_64_BIT}, 1)
-  ifndef NO_PERF_READ_VDSO32
-    $(call feature_check,compile-32)
-    ifeq ($(feature-compile-32), 1)
-      CFLAGS += -DHAVE_PERF_READ_VDSO32
-    else
-      NO_PERF_READ_VDSO32 := 1
-    endif
+ifdef CONFIG_READ_VDSOX32
+  $(call feature_check,compile-x32)
+  ifeq ($(feature-compile-x32), 0)
+    $(shell $(KCONFIG_SCRIPT) -d CONFIG_READ_VDSOX32)
   endif
-  ifneq (${IS_X86_64}, 1)
-    NO_PERF_READ_VDSOX32 := 1
-  endif
-  ifndef NO_PERF_READ_VDSOX32
-    $(call feature_check,compile-x32)
-    ifeq ($(feature-compile-x32), 1)
-      CFLAGS += -DHAVE_PERF_READ_VDSOX32
-    else
-      NO_PERF_READ_VDSOX32 := 1
-    endif
-  endif
-else
-  NO_PERF_READ_VDSO32 := 1
-  NO_PERF_READ_VDSOX32 := 1
 endif
 
 # Among the variables below, these:
@@ -712,36 +697,9 @@ define feature_print_text_code
     MSG = $(shell printf '...%30s: %s' $(1) $(2))
 endef
 
-PERF_FEATURES := $(foreach feat,$(LIB_FEATURE_TESTS),feature-$(feat)($(feature-$(feat))))
-PERF_FEATURES_FILE := $(shell touch $(OUTPUT)PERF-FEATURES; cat $(OUTPUT)PERF-FEATURES)
-
-ifeq ($(dwarf-post-unwind),1)
-  PERF_FEATURES += dwarf-post-unwind($(dwarf-post-unwind-text))
-endif
-
-# The $(display_lib) controls the default detection message
-# output. It's set if:
-# - detected features differes from stored features from
-#   last build (in PERF-FEATURES file)
-# - one of the $(LIB_FEATURE_TESTS) is not detected
-# - VF is enabled
-
-ifneq ("$(PERF_FEATURES)","$(PERF_FEATURES_FILE)")
-  $(shell echo "$(PERF_FEATURES)" > $(OUTPUT)PERF-FEATURES)
-  display_lib := 1
-endif
-
-feature_check = $(eval $(feature_check_code))
-define feature_check_code
-  ifneq ($(feature-$(1)), 1)
-    display_lib := 1
-  endif
-endef
-
-$(foreach feat,$(LIB_FEATURE_TESTS),$(call feature_check,$(feat)))
+display_lib := 1
 
 ifeq ($(VF),1)
-  display_lib := 1
   display_vf := 1
 endif
 

@@ -30,7 +30,7 @@
 #include <pthread.h>
 #include <math.h>
 
-#ifdef HAVE_KVM_STAT_SUPPORT
+#ifdef CONFIG_BUILTIN_KVM_STAT
 #include <asm/kvm_perf.h>
 #include "util/kvm-stat.h"
 
@@ -1448,7 +1448,7 @@ static int kvm_cmd_stat(const char *file_name, int argc, const char **argv)
 perf_stat:
 	return cmd_stat(argc, argv, NULL);
 }
-#endif /* HAVE_KVM_STAT_SUPPORT */
+#endif /* CONFIG_BUILTIN_KVM_STAT */
 
 static int __cmd_record(const char *file_name, int argc, const char **argv)
 {
@@ -1570,7 +1570,7 @@ int cmd_kvm(int argc, const char **argv, const char *prefix __maybe_unused)
 	if (!strncmp(argv[0], "buildid-list", 12))
 		return __cmd_buildid_list(file_name, argc, argv);
 
-#ifdef HAVE_KVM_STAT_SUPPORT
+#ifdef CONFIG_BUILTIN_KVM_STAT
 	if (!strncmp(argv[0], "stat", 4))
 		return kvm_cmd_stat(file_name, argc, argv);
 #endif
