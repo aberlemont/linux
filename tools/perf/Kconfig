@@ -128,6 +128,13 @@ config BUILTIN_KVM
         ---help---
 	  Tool to trace/measure kvm guest os
 
+config BUILTIN_KVM_STAT
+	bool "kvm-stat"
+	default y
+	depends on BUILTIN_KVM && (ARCH = "x86" || ARCH = "s390")
+        ---help---
+	  Get performance counter statistics on a kvm guest os.
+
 config BUILTIN_LIST
 	bool "list"
 	default y

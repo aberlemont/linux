@@ -1,6 +1,0 @@
-include $(CONFIG_DETECTED)
-include $(KCONFIG_CONFIG)
-
-CONFIG := $(srctree)/scripts/config --file $(KCONFIG_CONFIG)
-
-all:

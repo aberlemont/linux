@@ -1,5 +1,5 @@
+#include "generated/autoconf.h"
 #include "builtin.h"
-#include "builtin-cmds.h"
 #include "perf.h"
 
 #include "util/util.h"

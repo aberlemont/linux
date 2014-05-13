@@ -1,6 +1,5 @@
 srctree := $(abspath $(if $(KBUILD_SRC),$(KBUILD_SRC),$(CURDIR)/../../))
 objtree := $(abspath $(if $(KBUILD_SRC),$(CURDIR),$(CURDIR)/../..))
-
 VPATH   := $(srctree)
 
 export srctree VPATH
@@ -36,7 +35,8 @@ export quiet Q KBUILD_VERBOSE
 ifndef V
 QUIET_LINK  = @echo '  LD      $@';
 QUIET_GEN   = @echo '  GEN     $@';
-QUIET_CLEAN = @echo '  CLEAN   tools/perf';
+QUIET_CLEAN = @printf '  CLEAN    %s\n' $1;
+QUIET_INSTALL = @printf '  INSTALL  %s\n' $1;
 endif
 
 export QUIET_BISON QUIET_FLEX
@@ -158,7 +158,6 @@ $(CONFIG_DETECTED): $(KCONFIG_CONFIG)
 # no need to include auto.conf.cmd, because .config
 # is the only dependency here
 $(KCONFIG_AUTOCONFIG): $(KCONFIG_CONFIG) $(CONFIG_DETECTED)
-	$(Q)$(MAKE) -f $(src-perf)/config/Makefile.fix-config
 	$(Q)mkdir -p $(obj-perf)/include/config
 	$(Q)mkdir -p $(obj-perf)/include/generated
 	$(Q)$(MAKE) -s $(build)=scripts/kconfig silentoldconfig
@@ -167,22 +166,26 @@ $(KCONFIG_AUTOCONFIG): $(KCONFIG_CONFIG) $(CONFIG_DETECTED)
 clean-dirs := $(addprefix _clean_, tools/perf/)
 
 $(clean-dirs):
+	$(call QUIET_CLEAN, core-objs)
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.clean obj=$(patsubst _clean_%,%,$@)
 
-clean: $(clean-dirs) $(LIBTRACEEVENT)-clean $(LIBAPIKFS)-clean
-	$(Q)$(QUIET_CLEAN)
-	$(Q)rm -f $(obj-perf)/perf
-	$(Q)rm -f $(obj-perf)/common-cmds.h
-	$(Q)rm -f $(obj-perf)/python/perf.so
+config-clean:
+	$(call QUIET_CLEAN, config)
+	@$(MAKE) OUTPUT=$(obj-perf)/config/feature-checks/ -C $(src-perf)/config/feature-checks clean >/dev/null
 	$(Q)rm -rf $(obj-perf)/include/generated $(obj-perf)/include/config
+	$(Q)rm -f $(CONFIG_DETECTED) $(KCONFIG_CONFIG)
+	$(Q)rm -f $(obj-perf)/common-cmds.h
+
+clean: $(clean-dirs) $(LIBTRACEEVENT)-clean $(LIBAPIKFS)-clean config-clean
+	$(call QUIET_CLEAN, core-progs)
+	$(Q)rm -f $(obj-perf)/perf
+	$(call QUIET_CLEAN, misc)
 	$(Q)find $(obj-perf) \
 		\( -name '*.[oas]' -o -name '.*.cmd' \
 		-o -name '.*.d' -o -name '.*.tmp' \
 		-o -name '*-flex.[ch]' -o -name '*-bison.[ch]' \
 		\) -type f -print | xargs rm -f
-	$(Q)$(python-clean)
-	$(Q)rm -f $(CONFIG_DETECTED) $(KCONFIG_CONFIG)
-	@$(MAKE) OUTPUT=$(obj-perf)/config/feature-checks/ -C $(src-perf)/config/feature-checks clean >/dev/null
+	$(python-clean)
 
 TAGS tags:
 	$(Q)rm -f $(src-perf)/tags
@@ -257,7 +260,7 @@ PYTHON_EXTBUILD_TMP := $(PYTHON_EXTBUILD)tmp/
 
 export PYTHON_EXTBUILD_LIB PYTHON_EXTBUILD_TMP
 
-python-clean := rm -rf $(PYTHON_EXTBUILD) $(obj-perf)/python/perf.so
+python-clean := $(call QUIET_CLEAN, python) rm -rf $(PYTHON_EXTBUILD) $(obj-perf)/python/perf.so
 
 PYTHON_EXT_SRCS   := $(addprefix $(src-perf)/,$(shell grep -v ^\# $(src-perf)/util/python-ext-sources))
 PYTHON_EXT_DEPS   := $(src-perf)/util/python-ext-sources $(src-perf)/util/setup.py
@@ -343,25 +346,34 @@ $(SCRIPTS) : % : %.sh
 all: $(SCRIPTS)
 
 install-bin: all
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) $(obj-perf)/perf '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
-	$(INSTALL) $(src-perf)/perf-archive -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)'
-	$(INSTALL) $(src-perf)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace'
-	$(INSTALL) $(src-perf)/scripts/perl/*.pl -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl'
-	$(INSTALL) $(src-perf)/scripts/perl/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
-	$(INSTALL) $(src-perf)/scripts/python/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace'
-	$(INSTALL) $(src-perf)/scripts/python/*.py -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python'
-	$(INSTALL) $(src-perf)/scripts/python/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d'
-	$(INSTALL) $(src-perf)/perf-completion.sh '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d/perf'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests'
-	$(INSTALL) $(src-perf)/tests/attr.py '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests/attr'
-	$(INSTALL) $(src-perf)/tests/attr/* '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests/attr'
+	$(call QUIET_INSTALL, binaries) \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)' ; \
+		$(INSTALL) $(obj-perf)/perf '$(DESTDIR_SQ)$(bindir_SQ)' ; \
+		ln '$(DESTDIR_SQ)$(bindir_SQ)/perf' '$(DESTDIR_SQ)$(bindir_SQ)/trace'
+	$(call QUIET_INSTALL, libexec) \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)'
+	$(call QUIET_INSTALL, perf-archive) \
+		$(INSTALL) $(src-perf)/perf-archive -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)'
+	$(call QUIET_INSTALL, perl-scripts) \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace' ; \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin' ; \
+		$(INSTALL) $(src-perf)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/Perf-Trace-Util/lib/Perf/Trace' ; \
+		$(INSTALL) $(src-perf)/scripts/perl/*.pl -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl' ; \
+		$(INSTALL) $(src-perf)/scripts/perl/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/perl/bin'
+	$(call QUIET_INSTALL, python-scripts) \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace' ; \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin' ; \
+		$(INSTALL) $(src-perf)/scripts/python/Perf-Trace-Util/lib/Perf/Trace/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/Perf-Trace-Util/lib/Perf/Trace' ; \
+		$(INSTALL) $(src-perf)/scripts/python/*.py -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python' ; \
+		$(INSTALL) $(src-perf)/scripts/python/bin/* -t '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/scripts/python/bin'
+	$(call QUIET_INSTALL, perf_completion-script) \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d' ; \
+		$(INSTALL) $(src-perf)/perf-completion.sh '$(DESTDIR_SQ)$(sysconfdir_SQ)/bash_completion.d/perf'
+	$(call QUIET_INSTALL, tests) \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests' ; \
+		$(INSTALL) $(src-perf)/tests/attr.py '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests' ; \
+		$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests/attr' ; \
+		$(INSTALL) $(src-perf)/tests/attr/* '$(DESTDIR_SQ)$(perfexec_instdir_SQ)/tests/attr'
 
 install: install-bin try-install-man $(LIBTRACEEVENT)-install
 
