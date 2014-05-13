@@ -407,7 +407,7 @@ static int report__browse_hists(struct report *rep)
 	const char *help = "For a higher level overview, try: perf report --sort comm,dso";
 
 	switch (use_browser) {
-#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
+#ifdef CONFIG_TUI
 	case 1:
 		ret = perf_evlist__tui_browse_hists(evlist, help, NULL,
 						    rep->min_percent,

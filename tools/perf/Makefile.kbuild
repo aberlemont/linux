@@ -43,7 +43,7 @@ export QUIET_BISON QUIET_FLEX
 
 ifeq ($(KBUILD_SRC),)
 
-ifeq ("$(origin O)", "command line")
+ifneq ($(O),)
 KBUILD_OUTPUT := $(O)
 else
 KBUILD_OUTPUT := $(objtree)

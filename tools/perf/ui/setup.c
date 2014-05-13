@@ -77,7 +77,7 @@ void setup_browser(bool fallback_to_pager)
 		       PERF_GTK_DSO);
 		sleep(1);
 		/* fall through */
-#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
+#ifdef CONFIG_TUI
 	case 1:
 		use_browser = 1;
 		if (ui__init() == 0)
@@ -98,7 +98,7 @@ void exit_browser(bool wait_for_ok __maybe_unused)
 	case 2:
 		exit_gtk_browser(wait_for_ok);
 		break;
-#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
+#ifdef CONFIG_TUI
 	case 1:
 		ui__exit(wait_for_ok);
 		break;

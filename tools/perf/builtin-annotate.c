@@ -155,7 +155,7 @@ find_next:
 
 			/* skip missing symbols */
 			nd = rb_next(nd);
-#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
+#ifdef CONFIG_TUI
 		} else if (use_browser == 1) {
 			struct rb_node *next = NULL;
 			key = hist_entry__tui_annotate(he, evsel, NULL);
@@ -303,7 +303,7 @@ int cmd_annotate(int argc, const char **argv, const char *prefix __maybe_unused)
 	OPT_BOOLEAN('D', "dump-raw-trace", &dump_trace,
 		    "dump raw trace in ASCII"),
 	OPT_BOOLEAN(0, "gtk", &annotate.use_gtk, "Use the GTK interface"),
-#if defined(CONFIG_TUI) || !defined(CONFIG_KBUILD)
+#ifdef CONFIG_TUI
 	OPT_BOOLEAN(0, "tui", &annotate.use_tui, "Use the TUI interface"),
 #endif
 	OPT_BOOLEAN(0, "stdio", &annotate.use_stdio, "Use the stdio interface"),
