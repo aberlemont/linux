@@ -75,6 +75,23 @@ const char *conf_get_autoconfig_name(void)
 	return name ? name : "include/config/auto.conf";
 }
 
+const char *conf_get_autoconfigdep_name(void)
+{
+	static char res_value[PATH_MAX+1];
+
+	const char *name = conf_get_autoconfig_name();
+
+	if (strlen(name) > PATH_MAX - 4)
+		name = NULL;
+	else {
+		strcpy(res_value, name);
+		strcat(res_value, ".cmd");
+		name = res_value;
+	}
+
+	return name;
+}
+
 static char *conf_expand_value(const char *in)
 {
 	struct symbol *sym;
@@ -953,7 +970,11 @@ int conf_write_autoconf(void)
 
 	sym_clear_all_valid();
 
-	file_write_dep("include/config/auto.conf.cmd");
+	name = conf_get_autoconfigdep_name();
+	if (name == NULL)
+		return 1;
+
+	file_write_dep(name);
 
 	if (conf_split_config())
 		return 1;
