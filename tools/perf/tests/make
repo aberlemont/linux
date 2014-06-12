@@ -11,34 +11,17 @@ else
 lib = lib
 endif
 
+list = $(shell ls $1 2>/dev/null)
 has = $(shell which $1 2>/dev/null)
 
 # standard single make variable specified
+make_pure           :=
 make_clean_all      := clean all
 make_python_perf_so := python/perf.so
-make_debug          := DEBUG=1
-make_no_libperl     := NO_LIBPERL=1
-make_no_libpython   := NO_LIBPYTHON=1
-make_no_scripts     := NO_LIBPYTHON=1 NO_LIBPERL=1
-make_no_newt        := NO_NEWT=1
-make_no_slang       := NO_SLANG=1
-make_no_gtk2        := NO_GTK2=1
-make_no_ui          := NO_NEWT=1 NO_SLANG=1 NO_GTK2=1
-make_no_demangle    := NO_DEMANGLE=1
-make_no_libelf      := NO_LIBELF=1
-make_no_libunwind   := NO_LIBUNWIND=1
-make_no_libdw_dwarf_unwind := NO_LIBDW_DWARF_UNWIND=1
-make_no_backtrace   := NO_BACKTRACE=1
-make_no_libnuma     := NO_LIBNUMA=1
-make_no_libaudit    := NO_LIBAUDIT=1
-make_no_libbionic   := NO_LIBBIONIC=1
 make_tags           := tags
 make_cscope         := cscope
 make_help           := help
 make_doc            := doc
-make_perf_o           := perf.o
-make_util_map_o       := util/map.o
-make_util_pmu_bison_o := util/pmu-bison.o
 make_install        := install
 make_install_bin    := install-bin
 make_install_doc    := install-doc
@@ -48,37 +31,11 @@ make_install_info   := install-info
 make_install_pdf    := install-pdf
 make_static         := LDFLAGS=-static
 
-# all the NO_* variable combined
-make_minimal        := NO_LIBPERL=1 NO_LIBPYTHON=1 NO_NEWT=1 NO_GTK2=1
-make_minimal        += NO_DEMANGLE=1 NO_LIBELF=1 NO_LIBUNWIND=1 NO_BACKTRACE=1
-make_minimal        += NO_LIBNUMA=1 NO_LIBAUDIT=1 NO_LIBBIONIC=1
-make_minimal        += NO_LIBDW_DWARF_UNWIND=1
-
 # $(run) contains all available tests
 run := make_pure
 run += make_clean_all
-run += make_python_perf_so
-run += make_debug
-run += make_no_libperl
-run += make_no_libpython
-run += make_no_scripts
-run += make_no_newt
-run += make_no_slang
-run += make_no_gtk2
-run += make_no_ui
-run += make_no_demangle
-run += make_no_libelf
-run += make_no_libunwind
-run += make_no_libdw_dwarf_unwind
-run += make_no_backtrace
-run += make_no_libnuma
-run += make_no_libaudit
-run += make_no_libbionic
 run += make_help
 run += make_doc
-run += make_perf_o
-run += make_util_map_o
-run += make_util_pmu_bison_o
 run += make_install
 run += make_install_bin
 # FIXME 'install-*' commented out till they're fixed
@@ -87,8 +44,7 @@ run += make_install_bin
 # run += make_install_html
 # run += make_install_info
 # run += make_install_pdf
-run += make_minimal
-run += make_static
+# run += make_static
 
 ifneq ($(call has,ctags),)
 run += make_tags
@@ -103,6 +59,10 @@ run_O := $(addsuffix _O,$(run))
 
 # disable some tests for O=...
 run_O := $(filter-out make_python_perf_so_O,$(run_O))
+
+# $(run_CONFIGS) is a set of automatically-generated Kconfig
+# configurations
+run_CONFIGS := $(call list,$(PERF)/tests/configs/)
 
 # define test for each compile as 'test_NAME' variable
 # with the test itself as a value
@@ -183,7 +143,7 @@ test_make_util_pmu_bison_o_O := test -f $$TMP_O/util/pmu-bison.o
 test_default = test -x $(PERF)/perf
 test = $(if $(test_$1),$(test_$1),$(test_default))
 
-test_default_O = test -x $$TMP_O/perf
+test_default_O = test -x $$TMP_O/tools/perf/perf
 test_O = $(if $(test_$1),$(test_$1),$(test_default_O))
 
 all:
@@ -218,13 +178,23 @@ $(run_O):
 	$(call test_O,$@) && \
 	rm -rf $@ $$TMP_O $$TMP_DEST || (cat $@ ; false)
 
+$(run_CONFIGS):
+	$(call clean)
+	@TMP_DEST=$$(mktemp -d); \
+	cmd="cd $(PERF) && cp tests/configs/$@ .config && make -f $(MK) DESTDIR=$$TMP_DEST olddefconfig && make -f $(MK) JOBS=4 DESTDIR=$$TMP_DEST"; \
+	echo "- $@: $$cmd" && echo $$cmd > $@ && \
+	( eval $$cmd ) >> $@ 2>&1; \
+	echo "  test: $(call test,$@)" >> $@ 2>&1; \
+	$(call test,$@) && \
+	rm -f $@ \
+	rm -rf $$TMP_DEST
+
 tarpkg:
 	@cmd="$(PERF)/tests/perf-targz-src-pkg $(PERF)"; \
 	echo "- $@: $$cmd" && echo $$cmd > $@ && \
 	( eval $$cmd ) >> $@ 2>&1
-	
 
-all: $(run) $(run_O) tarpkg
+all: $(run) $(run_O) $(run_CONFIGS) tarpkg
 	@echo OK
 
 out: $(run_O)
