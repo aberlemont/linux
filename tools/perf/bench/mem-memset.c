@@ -6,6 +6,8 @@
  * Trivial clone of mem-memcpy.c.
  */
 
+#include "generated/autoconf.h"
+
 #include "../perf.h"
 #include "../util/util.h"
 #include "../util/parse-options.h"
@@ -59,7 +61,7 @@ static const struct routine routines[] = {
 	{ "default",
 	  "Default memset() provided by glibc",
 	  memset },
-#ifdef HAVE_ARCH_X86_64_SUPPORT
+#ifdef CONFIG_X86_64
 
 #define MEMSET_FN(fn, name, desc) { name, desc, fn },
 #include "mem-memset-x86-64-asm-def.h"

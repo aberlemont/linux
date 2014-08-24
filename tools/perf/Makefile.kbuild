@@ -123,8 +123,11 @@ export KCONFIG_AUTOHEADER KCONFIG_AUTOCONFIG KCONFIG_SCRIPT
 
 # perf detected config
 CONFIG_DETECTED := $(obj-perf)/.config-detected
-
 export CONFIG_DETECTED
+
+# arch-related main variables
+include $(src-perf)/config/Makefile.arch
+export ARCH IS_X86_64 CROSS_COMPILE
 
 # external .a libs
 LIBTRACEEVENT   := $(obj-kernel)/tools/lib/traceevent/libtraceevent.a
@@ -202,9 +205,6 @@ ifndef dont-detect
 ifdef CONFIG_DETECTED_STORED
 # Following variables are needed within Kbuild files, we need
 # to export them as they are not part of the .config set.
-export CONFIG_ARCH := $(ARCH)
-export CROSS_COMPILE
-export CONFIG_X86_64
 export htmldir_SQ
 export infodir_SQ
 export mandir_SQ

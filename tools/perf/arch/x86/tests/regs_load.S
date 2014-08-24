@@ -1,4 +1,5 @@
 #include <linux/linkage.h>
+#include "generated/autoconf.h"
 
 #define AX	 0
 #define BX	 1 * 8
@@ -26,7 +27,7 @@
 #define R15	23 * 8
 
 .text
-#ifdef HAVE_ARCH_X86_64_SUPPORT
+#ifdef CONFIG_X86_64
 ENTRY(perf_regs_load)
 	movq %rax, AX(%rdi)
 	movq %rbx, BX(%rdi)

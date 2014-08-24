@@ -5,9 +5,11 @@
 #include <linux/types.h>
 #include <asm/perf_regs.h>
 
+#include "generated/autoconf.h"
+
 void perf_regs_load(u64 *regs);
 
-#ifndef HAVE_ARCH_X86_64_SUPPORT
+#ifndef CONFIG_X86_64
 #define PERF_REGS_MASK ((1ULL << PERF_REG_X86_32_MAX) - 1)
 #define PERF_REGS_MAX PERF_REG_X86_32_MAX
 #define PERF_SAMPLE_REGS_ABI PERF_SAMPLE_REGS_ABI_32
@@ -58,7 +60,7 @@ static inline const char *perf_reg_name(int id)
 		return "FS";
 	case PERF_REG_X86_GS:
 		return "GS";
-#ifdef HAVE_ARCH_X86_64_SUPPORT
+#ifdef CONFIG_X86_64
 	case PERF_REG_X86_R8:
 		return "R8";
 	case PERF_REG_X86_R9:
@@ -75,7 +77,7 @@ static inline const char *perf_reg_name(int id)
 		return "R14";
 	case PERF_REG_X86_R15:
 		return "R15";
-#endif /* HAVE_ARCH_X86_64_SUPPORT */
+#endif /* CONFIG_X86_64 */
 	default:
 		return NULL;
 	}

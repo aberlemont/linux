@@ -1,11 +1,12 @@
 
 #include <errno.h>
 #include <libunwind.h>
+#include "generated/autoconf.h"
 #include "perf_regs.h"
 #include "../../util/unwind.h"
 #include "../../util/debug.h"
 
-#ifdef HAVE_ARCH_X86_64_SUPPORT
+#ifdef CONFIG_X86_64
 int libunwind__arch_reg_id(int regnum)
 {
 	int id;
@@ -109,4 +110,4 @@ int libunwind__arch_reg_id(int regnum)
 
 	return id;
 }
-#endif /* HAVE_ARCH_X86_64_SUPPORT */
+#endif /* CONFIG_X86_64 */

@@ -1,6 +1,30 @@
 
 mainmenu "The perf configuration"
 
+config TARGET_ARCH
+	string
+	option env="ARCH"
+
+config TARGET_IS_X86_64
+       string
+       option env="IS_X86_64"
+
+config TARGET_CROSS_COMPILE
+	string
+	option env="CROSS_COMPILE"
+
+config ARCH
+	string
+	default TARGET_ARCH
+
+config X86_64
+	bool
+	default y if TARGET_ARCH = "x86" && TARGET_IS_X86_64 = "1"
+
+config CROSS_COMPILE
+	string
+	default TARGET_CROSS_COMPILE
+
 menu "Built-in commands"
 
 config BUILTIN_RECORD
