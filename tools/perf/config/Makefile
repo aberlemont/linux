@@ -20,11 +20,9 @@ NO_PERF_REGS := 1
 
 # Additional ARCH settings for x86
 ifeq ($(ARCH),x86)
-  ifeq (${IS_X86_64}, 1)
-    CFLAGS += -DHAVE_ARCH_X86_64_SUPPORT
-    ARCH_INCLUDE = ../../arch/x86/lib/memcpy_64.S ../../arch/x86/lib/memset_64.S
+  ifeq ($(IS_X86_64),1)
     LIBUNWIND_LIBS = -lunwind -lunwind-x86_64
-    CONFIG_X86_64=y
+    $(shell $(KCONFIG_SCRIPT) -e CONFIG_X86_64)
   else
     LIBUNWIND_LIBS = -lunwind -lunwind-x86
   endif
@@ -794,7 +792,6 @@ all:
 	$(call store,PARSER_DEBUG_FLEX)
 	$(call store,PYTHON_EMBED_CCOPTS)
 	$(call store,PERL_EMBED_CCOPTS)
-	$(call store,CONFIG_X86_64)
 	$(call store,NO_LIBUNWIND)
 	$(call store,NO_LIBPERL)
 	$(call store,NO_LIBPYTHON)
