@@ -2745,6 +2745,169 @@ next:
 	}
 }
 
+#if 1 /* test */
+
+static int hist_browser__locate(struct rb_root *output,
+				struct rb_root *root,
+				struct callchain_list *target)
+{
+	struct callchain_node *new_node, *root_node, *tmp_node;
+	struct rb_node *node, *next;
+	bool found;
+
+	root_node = rb_entry(output, struct callchain_node, rb_root);
+
+	new_node = zalloc(sizeof(*new_node));
+	if (!new_node) {
+		perror("not enough memory to create node for code path tree");
+		return -1;
+	}
+	new_node->parent = root_node;
+	INIT_LIST_HEAD(&new_node->val);
+	INIT_LIST_HEAD(&new_node->parent_val);
+
+	new_node->rb_root_in = root_node->rb_root_in;
+	root_node->rb_root_in = RB_ROOT;
+
+	node = rb_first(&new_node->rb_root_in);
+	while (node) {
+		tmp_node = rb_entry(node, struct callchain_node, rb_node_in);
+		tmp_node->parent = new_node;
+		node = rb_next(node);
+	}
+
+	/* make it the first root_node */
+	rb_link_node(&new_node->rb_node_in,
+		     NULL, &root_node->rb_root_in.rb_node);
+	rb_insert_color(&new_node->rb_node_in, &root_node->rb_root_in);
+
+	found = false;
+	node = rb_first(root);
+
+	while (node) {
+		struct callchain_list *call, *tmp;
+		char folded_sign = ' ';
+
+		tmp_node = rb_entry(node, struct callchain_node, rb_node);
+		next = rb_next(node);
+
+		list_for_each_entry(call, &tmp_node->val, list) {
+			struct callchain_list *new_call;
+
+			new_call = zalloc(sizeof(*new_call));
+			if (!new_call) {
+				perror("not enough memory for the code path tree");
+				return -1;
+			}
+
+			new_call->ip = call->ip;
+			new_call->ms.sym = call->ms.sym;
+			new_call->ms.map = map__get(call->ms.map);
+
+			list_add_tail(&new_call->list, &new_node->val);
+
+			found = target == call;
+			folded_sign = callchain_list__folded(call);
+			if (found || folded_sign == '+')
+				break;
+		}
+
+		if (folded_sign == '-')
+			found = hist_browser__locate(&new_node->rb_root,
+						     &tmp_node->rb_root, target);
+
+		if (found)
+			goto out;
+
+		/* Free the linked list elements */
+		list_for_each_entry_safe(call, tmp, &new_node->val, list) {
+			list_del(&call->list);
+			map__zput(call->ms.map);
+			free(call);
+		}
+
+		node = next;
+	}
+
+	rb_erase(&new_node->rb_node_in, output);
+	free(new_node);
+
+	return -1;
+
+out:
+	return 0;
+}
+
+static int test__process_hist_entry(struct hist_browser *browser,
+				    struct popup_action *actions)
+{
+	struct hist_entry *entry, *he;
+	struct map_symbol *ms;
+	struct perf_evsel *evsel;
+	struct callchain_list *target;
+	struct rb_node *next;
+	int err, old_idx, new_idx;
+
+	he = browser->he_selection;
+	ms = browser->selection;
+
+	if (!he || !ms)
+		return 0;
+
+	if (ms == &he->ms)
+		return do_annotate(browser, actions);
+
+	entry = hist_entry__new(he, false);
+
+	target = container_of(ms, struct callchain_list, ms);
+
+	err = hist_browser__locate(&entry->sorted_chain,
+				   &he->sorted_chain, target);
+	if (err < 0)
+		return err;
+
+	/*
+	 * Temporarily update the evsel index so as to use a specific annotation
+	 * histogram to be cleaned and filled for the contextual annotation.
+	 */
+
+	evsel = hists_to_evsel(browser->hists);
+	old_idx = evsel->idx;
+	new_idx = symbol_conf.nr_events;
+	evsel->idx = new_idx;
+	hist_entry__zero_addr_samples(entry, new_idx);
+
+	/* Select the hist_entry which corresponds to the selected callchain */
+
+	next = rb_first(&evsel__detailed_hists(evsel)->entries);
+
+	while (next) {
+		int64_t cmp;
+
+		he = rb_entry(next, struct hist_entry, rb_node);
+
+		/* check if it complies with the entry created above */
+		cmp = hist_entry__cmp(he, entry);
+		if (cmp == 0) {
+			/* fill a specific annotation */
+			err = hist_entry__inc_addr_samples(he,
+							   new_idx,
+							   he->ip);
+		}
+
+		next = rb_next(&he->rb_node);
+	}
+
+	do_annotate(browser, actions);
+
+	evsel->idx = old_idx;
+
+	return err;
+
+}
+
+#endif /* test */
+
 static int perf_evsel__hists_browse(struct perf_evsel *evsel, int nr_events,
 				    const char *helpline,
 				    bool left_exits,
@@ -2864,6 +3027,23 @@ static int perf_evsel__hists_browse(struct perf_evsel *evsel, int nr_events,
 			actions->ms.map = browser->selection->map;
 			actions->ms.sym = browser->selection->sym;
 			do_annotate(browser, actions);
+			continue;
+		case 'A':
+			if (!hists__has(hists, sym)) {
+				ui_browser__warning(&browser->b, delay_secs * 2,
+			"Annotation is only available for symbolic views, "
+			"include \"sym*\" in --sort to use it.");
+				continue;
+			}
+
+			if (browser->selection == NULL ||
+			    browser->selection->sym == NULL ||
+			    browser->selection->map->dso->annotate_warned)
+				continue;
+
+			actions->ms.map = browser->selection->map;
+			actions->ms.sym = browser->selection->sym;
+			test__process_hist_entry(browser, actions);
 			continue;
 		case 'P':
 			hist_browser__dump(browser);

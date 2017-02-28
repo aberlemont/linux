@@ -153,6 +153,7 @@ int addr_map_symbol__account_cycles(struct addr_map_symbol *ams,
 				    struct addr_map_symbol *start,
 				    unsigned cycles);
 
+void hist_entry__zero_addr_samples(struct hist_entry *he, int evidx);
 int hist_entry__inc_addr_samples(struct hist_entry *he, int evidx, u64 addr);
 
 int symbol__alloc_hist(struct symbol *sym);

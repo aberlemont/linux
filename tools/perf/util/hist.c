@@ -444,8 +444,8 @@ static struct hist_entry_ops default_ops = {
 	.free	= hist_entry__free,
 };
 
-static struct hist_entry *hist_entry__new(struct hist_entry *template,
-					  bool sample_self)
+struct hist_entry *hist_entry__new(struct hist_entry *template,
+				   bool sample_self)
 {
 	struct hist_entry_ops *ops = template->ops;
 	size_t callchain_size = 0;
@@ -881,9 +881,10 @@ iter_add_single_cumulative_entry(struct hist_entry_iter *iter,
 {
 	struct perf_evsel *evsel = iter->evsel;
 	struct hists *hists = evsel__hists(evsel);
+	struct hists *detailed_hists = evsel__detailed_hists(evsel);
 	struct perf_sample *sample = iter->sample;
 	struct hist_entry **he_cache = iter->priv;
-	struct hist_entry *he;
+	struct hist_entry *he, *detailed_he;
 	int err = 0;
 
 	he = hists__add_entry(hists, al, iter->parent, NULL, NULL,
@@ -903,6 +904,18 @@ iter_add_single_cumulative_entry(struct hist_entry_iter *iter,
 	callchain_cursor_commit(&callchain_cursor);
 
 	hists__inc_nr_samples(hists, he->filtered);
+
+	detailed_he = hists__add_entry(hists, al, iter->parent, NULL, NULL,
+			      sample, true);
+	if (detailed_he == NULL)
+		return -ENOMEM;
+
+	iter->detailed_he = detailed_he;
+
+	hist_entry__append_callchain(detailed_he, sample);
+	callchain_cursor_commit(&callchain_cursor);
+
+	hists__inc_nr_samples(detailed_hists, detailed_he->filtered);
 
 	return err;
 }
@@ -980,6 +993,7 @@ iter_finish_cumulative_entry(struct hist_entry_iter *iter,
 {
 	zfree(&iter->priv);
 	iter->he = NULL;
+	iter->detailed_he = NULL;
 
 	return 0;
 }
@@ -2518,9 +2532,35 @@ static void hists_evsel__exit(struct perf_evsel *evsel)
 
 static int hists_evsel__init(struct perf_evsel *evsel)
 {
-	struct hists *hists = evsel__hists(evsel);
+	struct hists *hists;
 
+	hists = evsel__hists(evsel);
 	__hists__init(hists, &perf_hpp_list);
+
+	hists = evsel__detailed_hists(evsel);
+	__hists__init(hists, &detailed_perf_hpp_list);
+
+	return 0;
+}
+
+static int detailed_perf_hpp_list__init(void)
+{
+	const char *fields[] = {"dso", "symbol", "ip", NULL};
+
+	perf_hpp_list__init(&detailed_perf_hpp_list);
+
+	for (int i = 0; fields[i] != NULL; i++) {
+		int err = output_field_add(&detailed_perf_hpp_list, fields[i]);
+		if (err < 0)
+			return err;
+		err = sort_dimension__add(&detailed_perf_hpp_list,
+					 fields[i], NULL, 0);
+		if (err < 0)
+			return err;
+	}
+
+	perf_hpp__setup_output_field(&detailed_perf_hpp_list);
+
 	return 0;
 }
 
@@ -2534,8 +2574,12 @@ int hists__init(void)
 	int err = perf_evsel__object_config(sizeof(struct hists_evsel),
 					    hists_evsel__init,
 					    hists_evsel__exit);
-	if (err)
+	if (err) {
 		fputs("FATAL ERROR: Couldn't setup hists class\n", stderr);
+		return err;
+	}
+
+	err = detailed_perf_hpp_list__init();
 
 	return err;
 }
@@ -2545,3 +2589,4 @@ void perf_hpp_list__init(struct perf_hpp_list *list)
 	INIT_LIST_HEAD(&list->fields);
 	INIT_LIST_HEAD(&list->sorts);
 }
+

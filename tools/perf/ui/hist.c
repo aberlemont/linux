@@ -445,6 +445,12 @@ struct perf_hpp_list perf_hpp_list = {
 	.nr_header_lines = 1,
 };
 
+struct perf_hpp_list detailed_perf_hpp_list = {
+	.fields	= LIST_HEAD_INIT(perf_hpp_list.fields),
+	.sorts	= LIST_HEAD_INIT(perf_hpp_list.sorts),
+	.nr_header_lines = 1,
+};
+
 #undef HPP__COLOR_PRINT_FNS
 #undef HPP__COLOR_ACC_PRINT_FNS
 #undef HPP__PRINT_FNS

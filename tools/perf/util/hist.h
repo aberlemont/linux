@@ -108,6 +108,7 @@ struct hist_entry_iter {
 	struct perf_evsel *evsel;
 	struct perf_sample *sample;
 	struct hist_entry *he;
+	struct hist_entry *detailed_he;
 	struct symbol *parent;
 	void *priv;
 
@@ -121,6 +122,9 @@ extern const struct hist_iter_ops hist_iter_normal;
 extern const struct hist_iter_ops hist_iter_branch;
 extern const struct hist_iter_ops hist_iter_mem;
 extern const struct hist_iter_ops hist_iter_cumulative;
+
+struct hist_entry *hist_entry__new(struct hist_entry *template,
+				   bool sample_self);
 
 struct hist_entry *hists__add_entry(struct hists *hists,
 				    struct addr_location *al,
@@ -202,6 +206,7 @@ int hists__link(struct hists *leader, struct hists *other);
 struct hists_evsel {
 	struct perf_evsel evsel;
 	struct hists	  hists;
+	struct hists      detailed_hists;
 };
 
 static inline struct perf_evsel *hists_to_evsel(struct hists *hists)
@@ -214,6 +219,12 @@ static inline struct hists *evsel__hists(struct perf_evsel *evsel)
 {
 	struct hists_evsel *hevsel = (struct hists_evsel *)evsel;
 	return &hevsel->hists;
+}
+
+static inline struct hists *evsel__detailed_hists(struct perf_evsel *evsel)
+{
+	struct hists_evsel *hevsel = (struct hists_evsel *)evsel;
+	return &hevsel->detailed_hists;
 }
 
 int hists__init(void);
@@ -271,6 +282,7 @@ struct perf_hpp_list {
 };
 
 extern struct perf_hpp_list perf_hpp_list;
+extern struct perf_hpp_list detailed_perf_hpp_list;
 
 struct perf_hpp_list_node {
 	struct list_head	list;

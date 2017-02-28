@@ -560,10 +560,10 @@ int symbol__alloc_hist(struct symbol *sym)
 
 	/* Check for overflow in zalloc argument */
 	if (sizeof_sym_hist > (SIZE_MAX - sizeof(*notes->src))
-				/ symbol_conf.nr_events)
+				/ (symbol_conf.nr_events + 1))
 		return -1;
 
-	notes->src = zalloc(sizeof(*notes->src) + symbol_conf.nr_events * sizeof_sym_hist);
+	notes->src = zalloc(sizeof(*notes->src) + (symbol_conf.nr_events + 1) * sizeof_sym_hist);
 	if (notes->src == NULL)
 		return -1;
 	notes->src->sizeof_sym_hist = sizeof_sym_hist;
@@ -639,6 +639,16 @@ static int __symbol__account_cycles(struct annotation *notes,
 	return 0;
 }
 
+static void __symbol__zero_addr_samples(struct symbol *sym,
+				        struct annotation *notes, int evidx)
+{
+	size_t histo_size = (sym->end - sym->start) * sizeof(uint64_t);
+	struct sym_hist *h = annotation__histogram(notes, evidx);
+
+	h->sum = 0;
+	memset(h->addr, 0, histo_size);
+}
+
 static int __symbol__inc_addr_samples(struct symbol *sym, struct map *map,
 				      struct annotation *notes, int evidx, u64 addr)
 {
@@ -678,6 +688,18 @@ static struct annotation *symbol__get_annotation(struct symbol *sym, bool cycles
 			return NULL;
 	}
 	return notes;
+}
+
+static void symbol__zero_addr_samples(struct symbol *sym, int evidx)
+{
+	struct annotation *notes;
+
+	if (sym == NULL)
+		return;
+	notes = symbol__get_annotation(sym, false);
+	if (notes == NULL)
+		return;
+	__symbol__zero_addr_samples(sym, notes, evidx);
 }
 
 static int symbol__inc_addr_samples(struct symbol *sym, struct map *map,
@@ -757,6 +779,11 @@ int addr_map_symbol__account_cycles(struct addr_map_symbol *ams,
 int addr_map_symbol__inc_samples(struct addr_map_symbol *ams, int evidx)
 {
 	return symbol__inc_addr_samples(ams->sym, ams->map, evidx, ams->al_addr);
+}
+
+void hist_entry__zero_addr_samples(struct hist_entry *he, int evidx)
+{
+	symbol__zero_addr_samples(he->ms.sym, evidx);
 }
 
 int hist_entry__inc_addr_samples(struct hist_entry *he, int evidx, u64 ip)

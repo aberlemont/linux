@@ -2589,6 +2589,7 @@ static int __setup_sorting(struct perf_evlist *evlist)
 	ret = setup_sort_list(&perf_hpp_list, str, evlist);
 
 	free(str);
+
 	return ret;
 }
 
@@ -2685,7 +2686,7 @@ void sort__setup_elide(FILE *output)
 	}
 }
 
-int output_field_add(struct perf_hpp_list *list, char *tok)
+int output_field_add(struct perf_hpp_list *list, const char *tok)
 {
 	unsigned int i;
 
